@@ -32,41 +32,27 @@
     }
     button { background:#ff7eb3; color:#fff; cursor:pointer; }
     button.secondary { background:#ffcc00; color:#000; }
-    .candidate-container { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:14px; margin-top:12px; }
+    .candidate-container { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-top:12px; }
     .candidate {
       background: rgba(255,255,255,0.12);
       color: #111;
       padding: 12px;
       border-radius:12px;
       display:flex;
-      gap:12px;
-      align-items:flex-start;
-      box-sizing:border-box;
-    }
-    .candidate img {
-      width: 300px;
-      height: 300px;
-      object-fit: cover;
-      border-radius: 10px;
-      flex: 0 0 300px;
-      background: #ddd;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
     }
     .candidate .meta {
-      flex: 1 1 auto;
       display:flex;
       flex-direction:column;
-      align-items:flex-start;
+      align-items:center;
       gap:8px;
     }
     .candidate .meta h3 { margin:0; }
     .candidate .meta .controls { display:flex; gap:8px; flex-wrap:wrap; }
     .small { padding:8px 10px; font-size:14px; border-radius:8px; background:#eee; color:#111; cursor:pointer; border:0; }
-    .fileInput { background:transparent; color:inherit; }
     .muted { color: rgba(255,255,255,0.8); font-size:13px; }
-    @media (max-width:720px){
-      .candidate { flex-direction:column; align-items:center; text-align:center; }
-      .candidate img{ width:200px; height:200px; flex:0 0 200px; }
-    }
   </style>
 </head>
 <body>
@@ -85,7 +71,7 @@
   <!-- kandidat -->
   <div class="box" id="voteBox" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <div class="muted">Pilih 1 kandidat — foto bisa di-upload/hapus</div>
+      <div class="muted">Pilih 1 kandidat</div>
       <div class="row">
         <input id="resetCode" type="password" placeholder="Kode reset (admin)" />
         <button id="resetBtn" class="secondary">Reset Semua Data</button>
@@ -95,218 +81,13 @@
     <div class="candidate-container" id="candidateContainer"></div>
   </div>
 
-<!-- Firebase (module) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-  import {
-    getDatabase, ref, set, push, remove, onValue, get
-  } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+  import { getDatabase, ref, set, push, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
 
-  // === CONFIG: gunakan config project-mu ===
   const firebaseConfig = {
     apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
     authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
     databaseURL: "https://pemilihan-ketos-ecad9-default-rtdb.firebaseio.com",
     projectId: "pemilihan-ketos-ecad9",
-    storageBucket: "pemilihan-ketos-ecad9.firebasestorage.app",
-    messagingSenderId: "347053662789",
-    appId: "1:347053662789:web:cccd638e31fb3a2491792c",
-    measurementId: "G-8G46RV8ZW0"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  const KANDIDAT = [
-    "Kandidat 1","Kandidat 2","Kandidat 3","Kandidat 4",
-    "Kandidat 5","Kandidat 6","Kandidat 7","Kandidat 8"
-  ];
-
-  // current user while voting
-  let currentUser = null;
-
-  // photos cache (fetched from DB)
-  let photos = []; // photos[i] = dataURL or empty string
-
-  // Initialize photos from DB and listen for updates (real-time)
-  const photosRef = ref(db, "photos");
-  onValue(photosRef, snap => {
-    const val = snap.val();
-    // ensure array length = KANDIDAT.length
-    photos = Array.isArray(val) ? val.slice(0, KANDIDAT.length) : [];
-    // if object, convert:
-    if (!Array.isArray(val) && val && typeof val === 'object') {
-      photos = [];
-      for (let i=0;i<KANDIDAT.length;i++){
-        photos[i] = val[i] || "";
-      }
-    }
-    // fill rest with empty
-    for (let i = 0; i < KANDIDAT.length; i++) if (typeof photos[i] === 'undefined') photos[i] = "";
-    // re-render if vote box visible
-    if (document.getElementById("voteBox").style.display !== "none") renderCandidates();
-  });
-
-  // render candidate cards
-  function renderCandidates() {
-    const container = document.getElementById("candidateContainer");
-    container.innerHTML = "";
-    KANDIDAT.forEach((name, i) => {
-      const card = document.createElement("div");
-      card.className = "candidate";
-
-      const img = document.createElement("img");
-      img.src = photos[i] || `https://via.placeholder.com/300.png?text=No+Foto`;
-      img.alt = name;
-      img.loading = "lazy";
-      // click to fullscreen
-      img.addEventListener('click', () => {
-        showFullscreenImage(img.src, name);
-      });
-
-      const meta = document.createElement("div");
-      meta.className = "meta";
-
-      const title = document.createElement("h3");
-      title.textContent = name;
-
-      const controls = document.createElement("div");
-      controls.className = "controls";
-
-      // upload input (file)
-      const fileInput = document.createElement("input");
-      fileInput.type = "file";
-      fileInput.accept = "image/*";
-      fileInput.className = "fileInput";
-      fileInput.addEventListener("change", (ev) => handleUpload(ev, i));
-
-      // delete photo button
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "Hapus Foto";
-      delBtn.className = "small";
-      delBtn.addEventListener("click", () => handleDeletePhoto(i));
-
-      // pilih button
-      const pilihBtn = document.createElement("button");
-      pilihBtn.textContent = "Pilih";
-      pilihBtn.className = "small";
-      pilihBtn.style.background = "#4caf50";
-      pilihBtn.style.color = "#fff";
-      pilihBtn.addEventListener("click", () => vote(i));
-
-      controls.appendChild(pilihBtn);
-      controls.appendChild(fileInput);
-      controls.appendChild(delBtn);
-
-      meta.appendChild(title);
-      meta.appendChild(controls);
-
-      card.appendChild(img);
-      card.appendChild(meta);
-      container.appendChild(card);
-    });
-  }
-
-  // show fullscreen image (simple)
-  function showFullscreenImage(src, title){
-    const overlay = document.createElement('div');
-    overlay.style.position='fixed';
-    overlay.style.inset='0';
-    overlay.style.background='rgba(0,0,0,0.9)';
-    overlay.style.display='flex';
-    overlay.style.alignItems='center';
-    overlay.style.justifyContent='center';
-    overlay.style.zIndex='9999';
-    overlay.addEventListener('click',()=>document.body.removeChild(overlay));
-
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.maxWidth='95%';
-    img.style.maxHeight='95%';
-    img.style.borderRadius='8px';
-    img.alt = title;
-
-    overlay.appendChild(img);
-    document.body.appendChild(overlay);
-  }
-
-  // upload photo -> save to /photos/<i>
-  async function handleUpload(ev, index) {
-    const file = ev.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { alert("Pilih file gambar."); return; }
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = e.target.result;
-      // write into DB at /photos/<index>
-      await set(ref(db, `photos/${index}`), dataUrl);
-      // photos will update by onValue listener
-    };
-    reader.readAsDataURL(file);
-  }
-
-  // delete photo
-  async function handleDeletePhoto(index){
-    if(!confirm("Hapus foto kandidat ini?")) return;
-    await remove(ref(db, `photos/${index}`));
-    // photos updated by onValue listener
-  }
-
-  // vote: push to /votes and push voter to /voters
-  async function vote(index){
-    if (!currentUser) { alert("Isi nama & kelas dulu."); return; }
-    // push vote
-    const vref = push(ref(db, "votes"));
-    await set(vref, {
-      nama: currentUser.nama,
-      kelas: currentUser.kelas,
-      kandidat: KANDIDAT[index],
-      waktu: Date.now()
-    });
-    // also add to /voters (for list)
-    const pv = push(ref(db, "voters"));
-    await set(pv, { nama: currentUser.nama, kelas: currentUser.kelas, waktu: Date.now() });
-
-    alert("Terima kasih — suara sudah tercatat.");
-    // go back to start (clear form)
-    location.reload();
-  }
-
-  // Start voting (grab current user)
-  document.getElementById("startBtn").addEventListener('click', () => {
-    const nama = document.getElementById("nama").value.trim();
-    const kelas = document.getElementById("kelas").value.trim();
-    if (!nama || !kelas) { alert("Isi nama & kelas dulu."); return; }
-    currentUser = { nama, kelas };
-    document.getElementById("formBox").style.display = 'none';
-    document.getElementById("voteBox").style.display = 'block';
-    renderCandidates();
-  });
-
-  // Reset semua data (admin code = 271010)
-  document.getElementById("resetBtn").addEventListener('click', async () => {
-    const code = document.getElementById("resetCode").value;
-    if (code !== "271010") { alert("Kode reset salah!"); return; }
-    if (!confirm("Yakin hapus semua data (votes, photos, voters)?")) return;
-    await remove(ref(db, "votes"));
-    await remove(ref(db, "photos"));
-    await remove(ref(db, "voters"));
-    alert("Semua data telah dihapus.");
-    location.reload();
-  });
-
-  // ensure an initial photos array exists (optional)
-  (async function ensureInitialized(){
-    const snap = await get(ref(db, "photos"));
-    if (!snap.exists()){
-      // set empty photo entries (optional)
-      const emptyArr = Array(KANDIDAT.length).fill("");
-      await set(ref(db, "photos"), emptyArr);
-    }
-  })();
-
-  // initially load photos once (onValue handles updates)
-  // (onValue already set at top)
-</script>
-</body>
-</html>
+    storageBucket: "pemilihan-ket
