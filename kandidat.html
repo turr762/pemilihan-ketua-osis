@@ -72,3 +72,78 @@
       from {transform: scale(0.8); opacity: 0;}
       to {transform: scale(1); opacity: 1;}
     }
+  </style>
+</head>
+<body>
+  <h1>Pilih Kandidat Ketua OSIS</h1>
+  <div id="info"></div>
+  <div id="candidates"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { getDatabase, ref, push, set } 
+      from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
+      authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
+      databaseURL: "https://pemilihan-ketos-ecad9-default-rtdb.firebaseio.com",
+      projectId: "pemilihan-ketos-ecad9",
+      storageBucket: "pemilihan-ketos-ecad9.firebasestorage.app",
+      messagingSenderId: "347053662789",
+      appId: "1:347053662789:web:cccd638e31fb3a2491792c",
+      measurementId: "G-8G46RV8ZW0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Ambil data dari localStorage
+    const nama = localStorage.getItem("namaPemilih");
+    const kelas = localStorage.getItem("kelasPemilih");
+
+    document.getElementById("info").innerText = 
+      `Halo ${nama} dari ${kelas}, silakan pilih kandidat:`;
+
+    // Daftar kandidat + link foto
+    const kandidat = [
+      { nama: "Kandidat 1", foto: "foto/kandidat1.jpg" },
+      { nama: "Kandidat 2", foto: "foto/kandidat2.jpg" },
+      { nama: "Kandidat 3", foto: "foto/kandidat3.jpg" },
+      { nama: "Kandidat 4", foto: "foto/kandidat4.jpg" },
+      { nama: "Kandidat 5", foto: "foto/kandidat5.jpg" },
+      { nama: "Kandidat 6", foto: "foto/kandidat6.jpg" },
+      { nama: "Kandidat 7", foto: "foto/kandidat7.jpg" },
+      { nama: "Kandidat 8", foto: "foto/kandidat8.jpg" }
+    ];
+
+    const container = document.getElementById("candidates");
+
+    kandidat.forEach(k => {
+      const div = document.createElement("div");
+      div.className = "candidate";
+      div.innerHTML = `
+        <img src="${k.foto}" alt="${k.nama}">
+        <h3>${k.nama}</h3>
+        <button onclick="pilih('${nama}','${kelas}','${k.nama}')">Pilih</button>
+      `;
+      container.appendChild(div);
+    });
+
+    // fungsi simpan vote
+    window.pilih = function(nama, kelas, kandidat) {
+      const voteRef = push(ref(db, "votes"));
+      set(voteRef, {
+        nama,
+        kelas,
+        kandidat,
+        waktu: Date.now()
+      }).then(() => {
+        alert("Terima kasih, suara Anda tersimpan!");
+        window.location.href = "vote.html"; // balik lagi ke awal
+      });
+    }
+  </script>
+</body>
+</html>
