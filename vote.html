@@ -2,120 +2,113 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Voting Ketua OSIS SMPN 219 Jakarta</title>
+  <title>Voting Ketua OSIS</title>
   <style>
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
       min-height: 100vh;
+      margin: 0;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      overflow: hidden;
+      justify-content: flex-start;
+      animation: fadeIn 1s ease-in;
     }
 
     h1 {
-      color: #fff;
-      font-size: 32px;
-      margin-bottom: 20px;
-      animation: fadeDown 1s ease;
-      text-shadow: 0 3px 8px rgba(0,0,0,0.3);
-    }
-
-    .box {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(8px);
-      padding: 25px;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 420px;
-      text-align: center;
       color: white;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-      animation: fadeUp 1.2s ease;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+      margin-bottom: 20px;
+      animation: slideDown 1s ease;
     }
 
-    input, select, button {
-      margin: 10px 0;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      width: 100%;
-      font-size: 16px;
-      outline: none;
-      transition: all 0.3s ease;
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      animation: zoomIn 0.8s ease;
     }
 
-    input, select {
-      background: rgba(255,255,255,0.9);
-      color: #333;
+    select, input, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
     }
 
     button {
-      cursor: pointer;
-      background: linear-gradient(135deg, #ff7eb3, #ff5277);
+      background: #4facfe;
       color: white;
-      font-weight: bold;
-      box-shadow: 0 4px 12px rgba(255,82,119,0.4);
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
     }
-
     button:hover {
+      background: #00c6ff;
       transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(255,82,119,0.6);
     }
 
-    .muted {
-      margin-top: 8px;
-      font-size: 14px;
-      color: #f1f1f1;
-      opacity: 0.8;
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
     }
-
-    /* Animasi */
-    @keyframes fadeUp {
-      from {opacity:0; transform: translateY(40px);}
-      to {opacity:1; transform: translateY(0);}
+    @keyframes slideDown {
+      from {transform: translateY(-50px); opacity: 0;}
+      to {transform: translateY(0); opacity: 1;}
     }
-
-    @keyframes fadeDown {
-      from {opacity:0; transform: translateY(-40px);}
-      to {opacity:1; transform: translateY(0);}
+    @keyframes zoomIn {
+      from {transform: scale(0.8); opacity: 0;}
+      to {transform: scale(1); opacity: 1;}
     }
   </style>
 </head>
 <body>
-  <h1>Voting Ketua OSIS SMPN 219 Jakarta</h1>
-
-  <div id="formBox" class="box">
-    <input id="nama" type="text" placeholder="Nama">
-    <select id="tingkat">
+  <h1>Pemilihan Ketua OSIS</h1>
+  <div class="card">
+    <input type="text" id="nama" placeholder="Nama">
+    <select id="tingkat" onchange="isiKelas()">
       <option value="">Pilih Tingkat</option>
-      <option value="7">7</option>
-      <option value="8">8</option>
-      <option value="9">9</option>
+      <option value="7">Kelas 7</option>
+      <option value="8">Kelas 8</option>
+      <option value="9">Kelas 9</option>
     </select>
-    <select id="abjad" style="display:none;">
-      <option value="">Pilih Abjad</option>
-      <option value="A">A</option>
-      <option value="B">B</option>
-      <option value="C">C</option>
-      <option value="D">D</option>
-      <option value="E">E</option>
-      <option value="F">F</option>
-      <option value="G">G</option>
-      <option value="H">H</option>
+    <select id="kelas">
+      <option value="">Pilih Kelas</option>
     </select>
-    <button id="startBtn">Mulai Voting</button>
-    <div class="muted">Isi nama & kelas dulu, lalu pilih kandidat.</div>
+    <button onclick="mulaiVoting()">Mulai Voting</button>
   </div>
 
   <script>
-    // tampilkan abjad setelah pilih tingkat
-    document.getElementById("tingkat").addEventListener("change", () => {
-      document.getElementById("abjad").style.display = "block";
-    });
+    function isiKelas() {
+      let tingkat = document.getElementById("tingkat").value;
+      let kelasSelect = document.getElementById("kelas");
+      kelasSelect.innerHTML = '<option value="">Pilih Kelas</option>';
+
+      if (tingkat) {
+        for (let i = 65; i <= 72; i++) { // ASCII A-H
+          let opt = document.createElement("option");
+          opt.value = tingkat + String.fromCharCode(i);
+          opt.text = tingkat + String.fromCharCode(i);
+          kelasSelect.appendChild(opt);
+        }
+      }
+    }
+
+    function mulaiVoting() {
+      let nama = document.getElementById("nama").value;
+      let tingkat = document.getElementById("tingkat").value;
+      let kelas = document.getElementById("kelas").value;
+
+      if (!nama || !tingkat || !kelas) {
+        alert("Isi semua data dulu!");
+        return;
+      }
+      alert("Selamat " + nama + " dari kelas " + kelas + ", silakan pilih kandidat.");
+    }
   </script>
 </body>
 </html>
