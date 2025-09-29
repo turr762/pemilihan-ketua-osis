@@ -27,7 +27,7 @@
       margin-bottom: 16px;
     }
     .row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
-    input[type="text"], input[type="password"], button {
+    input[type="text"], select, input[type="password"], button {
       padding:10px; border-radius:8px; border:0; font-size:15px;
     }
     button { background:#ff7eb3; color:#fff; cursor:pointer; }
@@ -76,10 +76,23 @@
   <div class="box" id="formBox">
     <div class="row">
       <input id="nama" type="text" placeholder="Nama" style="min-width:200px" />
-      <input id="kelas" type="text" placeholder="Kelas" style="min-width:120px" />
+
+      <!-- dropdown kelas -->
+      <select id="kelasTingkat" style="min-width:120px;">
+        <option value="">Pilih Tingkat</option>
+        <option value="7">Kelas 7</option>
+        <option value="8">Kelas 8</option>
+        <option value="9">Kelas 9</option>
+      </select>
+
+      <!-- dropdown subkelas -->
+      <select id="kelasSub" style="min-width:120px;" disabled>
+        <option value="">Pilih Subkelas</option>
+      </select>
+
       <button id="startBtn">Mulai Voting</button>
     </div>
-    <div class="muted">Isi nama & kelas dulu, lalu pilih kandidat.</div>
+    <div class="muted">Isi nama & pilih kelas dulu, lalu pilih kandidat.</div>
   </div>
 
   <!-- kandidat -->
@@ -98,11 +111,8 @@
 <!-- Firebase (module) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-  import {
-    getDatabase, ref, set, push, remove, onValue, get
-  } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+  import { getDatabase, ref, set, push, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
 
-  // === CONFIG: gunakan config project-mu ===
   const firebaseConfig = {
     apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
     authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
@@ -122,32 +132,23 @@
     "Kandidat 5","Kandidat 6","Kandidat 7","Kandidat 8"
   ];
 
-  // current user while voting
   let currentUser = null;
+  let photos = [];
 
-  // photos cache (fetched from DB)
-  let photos = []; // photos[i] = dataURL or empty string
-
-  // Initialize photos from DB and listen for updates (real-time)
   const photosRef = ref(db, "photos");
   onValue(photosRef, snap => {
     const val = snap.val();
-    // ensure array length = KANDIDAT.length
     photos = Array.isArray(val) ? val.slice(0, KANDIDAT.length) : [];
-    // if object, convert:
     if (!Array.isArray(val) && val && typeof val === 'object') {
       photos = [];
       for (let i=0;i<KANDIDAT.length;i++){
         photos[i] = val[i] || "";
       }
     }
-    // fill rest with empty
     for (let i = 0; i < KANDIDAT.length; i++) if (typeof photos[i] === 'undefined') photos[i] = "";
-    // re-render if vote box visible
     if (document.getElementById("voteBox").style.display !== "none") renderCandidates();
   });
 
-  // render candidate cards
   function renderCandidates() {
     const container = document.getElementById("candidateContainer");
     container.innerHTML = "";
@@ -159,10 +160,7 @@
       img.src = photos[i] || `https://via.placeholder.com/300.png?text=No+Foto`;
       img.alt = name;
       img.loading = "lazy";
-      // click to fullscreen
-      img.addEventListener('click', () => {
-        showFullscreenImage(img.src, name);
-      });
+      img.addEventListener('click', () => { showFullscreenImage(img.src, name); });
 
       const meta = document.createElement("div");
       meta.className = "meta";
@@ -173,20 +171,17 @@
       const controls = document.createElement("div");
       controls.className = "controls";
 
-      // upload input (file)
       const fileInput = document.createElement("input");
       fileInput.type = "file";
       fileInput.accept = "image/*";
       fileInput.className = "fileInput";
       fileInput.addEventListener("change", (ev) => handleUpload(ev, i));
 
-      // delete photo button
       const delBtn = document.createElement("button");
       delBtn.textContent = "Hapus Foto";
       delBtn.className = "small";
       delBtn.addEventListener("click", () => handleDeletePhoto(i));
 
-      // pilih button
       const pilihBtn = document.createElement("button");
       pilihBtn.textContent = "Pilih";
       pilihBtn.className = "small";
@@ -207,7 +202,6 @@
     });
   }
 
-  // show fullscreen image (simple)
   function showFullscreenImage(src, title){
     const overlay = document.createElement('div');
     overlay.style.position='fixed';
@@ -230,7 +224,6 @@
     document.body.appendChild(overlay);
   }
 
-  // upload photo -> save to /photos/<i>
   async function handleUpload(ev, index) {
     const file = ev.target.files[0];
     if (!file) return;
@@ -238,24 +231,18 @@
     const reader = new FileReader();
     reader.onload = async (e) => {
       const dataUrl = e.target.result;
-      // write into DB at /photos/<index>
       await set(ref(db, `photos/${index}`), dataUrl);
-      // photos will update by onValue listener
     };
     reader.readAsDataURL(file);
   }
 
-  // delete photo
   async function handleDeletePhoto(index){
     if(!confirm("Hapus foto kandidat ini?")) return;
     await remove(ref(db, `photos/${index}`));
-    // photos updated by onValue listener
   }
 
-  // vote: push to /votes and push voter to /voters
   async function vote(index){
-    if (!currentUser) { alert("Isi nama & kelas dulu."); return; }
-    // push vote
+    if (!currentUser) { alert("Isi nama & pilih kelas dulu."); return; }
     const vref = push(ref(db, "votes"));
     await set(vref, {
       nama: currentUser.nama,
@@ -263,27 +250,44 @@
       kandidat: KANDIDAT[index],
       waktu: Date.now()
     });
-    // also add to /voters (for list)
     const pv = push(ref(db, "voters"));
     await set(pv, { nama: currentUser.nama, kelas: currentUser.kelas, waktu: Date.now() });
 
     alert("Terima kasih — suara sudah tercatat.");
-    // go back to start (clear form)
     location.reload();
   }
 
-  // Start voting (grab current user)
+  // --- kelas dropdown logic ---
+  const subkelas = ["A","B","C","D","E","F","G","H"];
+  const kelasSubSelect = document.getElementById("kelasSub");
+  const kelasTingkatSelect = document.getElementById("kelasTingkat");
+
+  kelasTingkatSelect.addEventListener('change', () => {
+    const tingkat = kelasTingkatSelect.value;
+    kelasSubSelect.innerHTML = '<option value="">Pilih Subkelas</option>';
+    if (!tingkat) {
+      kelasSubSelect.disabled = true;
+      return;
+    }
+    subkelas.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = `${tingkat}${s}`;
+      opt.textContent = `${tingkat}${s}`;
+      kelasSubSelect.appendChild(opt);
+    });
+    kelasSubSelect.disabled = false;
+  });
+
   document.getElementById("startBtn").addEventListener('click', () => {
     const nama = document.getElementById("nama").value.trim();
-    const kelas = document.getElementById("kelas").value.trim();
-    if (!nama || !kelas) { alert("Isi nama & kelas dulu."); return; }
+    const kelas = kelasSubSelect.value;
+    if (!nama || !kelas) { alert("Isi nama & pilih kelas dulu."); return; }
     currentUser = { nama, kelas };
     document.getElementById("formBox").style.display = 'none';
     document.getElementById("voteBox").style.display = 'block';
     renderCandidates();
   });
 
-  // Reset semua data (admin code = 271010)
   document.getElementById("resetBtn").addEventListener('click', async () => {
     const code = document.getElementById("resetCode").value;
     if (code !== "271010") { alert("Kode reset salah!"); return; }
@@ -295,18 +299,13 @@
     location.reload();
   });
 
-  // ensure an initial photos array exists (optional)
   (async function ensureInitialized(){
     const snap = await get(ref(db, "photos"));
     if (!snap.exists()){
-      // set empty photo entries (optional)
       const emptyArr = Array(KANDIDAT.length).fill("");
       await set(ref(db, "photos"), emptyArr);
     }
   })();
-
-  // initially load photos once (onValue handles updates)
-  // (onValue already set at top)
 </script>
 </body>
 </html>
