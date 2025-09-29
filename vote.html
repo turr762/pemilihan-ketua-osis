@@ -13,26 +13,25 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
+      justify-content: center;
       align-items: center;
     }
-    h1 { margin: 20px; }
+    h1 { margin-bottom: 20px; }
     .box {
       background: rgba(255,255,255,0.1);
       padding: 20px;
       border-radius: 12px;
       backdrop-filter: blur(6px);
-      max-width: 600px;
+      max-width: 500px;
       width: 90%;
-      margin-bottom: 20px;
     }
-    input, button {
-      margin: 8px 0;
+    input, select, button {
+      margin: 10px 0;
       padding: 10px;
       border: none;
       border-radius: 8px;
       width: 100%;
-      font-size: 15px;
+      font-size: 16px;
     }
     button {
       cursor: pointer;
@@ -44,17 +43,26 @@
     button:hover { background: #ff5277; }
     .hidden { display: none; }
     .candidate {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       background: rgba(255,255,255,0.15);
       margin: 10px 0;
-      padding: 15px;
-      border-radius: 12px;
-    }
-    img {
-      width: 100%;
-      max-height: 180px;
-      object-fit: cover;
+      padding: 10px;
       border-radius: 10px;
-      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .candidate img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover; /* supaya gambar tidak ketarik */
+      border-radius: 10px;
+      margin-right: 10px;
+    }
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
   </style>
 </head>
@@ -72,19 +80,13 @@
   <div id="voteBox" class="box hidden">
     <h2>Pilih Kandidat</h2>
     <div id="candidates"></div>
-  </div>
-
-  <!-- Admin Reset -->
-  <div class="box">
-    <h3>Admin Panel</h3>
-    <input type="password" id="resetCode" placeholder="Kode Reset">
-    <button onclick="resetAll()">Reset Semua Data</button>
+    <button onclick="resetSemua()">Reset Semua Data</button>
   </div>
 
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-    import { getDatabase, ref, push, set, update, remove } 
+    import { getDatabase, ref, push, set, remove, get, child } 
       from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
 
     // Config Firebase
@@ -109,26 +111,63 @@
       "Kandidat 5","Kandidat 6","Kandidat 7","Kandidat 8"
     ];
 
-    // Default foto kandidat (placeholder)
-    const defaultFoto = "https://via.placeholder.com/400x200?text=Foto+Kandidat";
+    // Simpan foto kandidat (local base64)
+    const fotoKandidat = {};
 
-    // Render kandidat
     function renderCandidates(nama, kelas) {
       const container = document.getElementById("candidates");
       container.innerHTML = "";
-      kandidat.forEach((k, i) => {
+      kandidat.forEach(k => {
         const div = document.createElement("div");
         div.className = "candidate";
-        div.innerHTML = `
-          <h3>${k}</h3>
-          <img id="foto-${i}" src="${localStorage.getItem("foto-"+i) || defaultFoto}" alt="${k}">
-          <input type="file" accept="image/*" onchange="uploadPhoto(event, ${i})">
-          <button onclick="removePhoto(${i})">Hapus Foto</button>
+
+        // tampilkan foto kalau ada
+        const img = document.createElement("img");
+        img.src = fotoKandidat[k] || "https://via.placeholder.com/80x80.png?text=No+Foto";
+
+        const name = document.createElement("span");
+        name.textContent = k;
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        actions.innerHTML = `
           <button onclick="pilih('${nama}','${kelas}','${k}')">Pilih</button>
+          <input type="file" accept="image/*" onchange="uploadFoto(event,'${k}')">
+          <button onclick="hapusFoto('${k}')">Hapus Foto</button>
         `;
+
+        div.appendChild(img);
+        div.appendChild(name);
+        div.appendChild(actions);
+
         container.appendChild(div);
       });
     }
+
+    // Upload foto kandidat
+    window.uploadFoto = function(event, kandidat) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          fotoKandidat[kandidat] = e.target.result;
+          renderCandidates(
+            document.getElementById("nama").value,
+            document.getElementById("kelas").value
+          );
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    // Hapus foto kandidat
+    window.hapusFoto = function(kandidat) {
+      delete fotoKandidat[kandidat];
+      renderCandidates(
+        document.getElementById("nama").value,
+        document.getElementById("kelas").value
+      );
+    };
 
     // Mulai voting
     window.mulaiVoting = function() {
@@ -143,25 +182,6 @@
       renderCandidates(nama, kelas);
     };
 
-    // Upload foto kandidat (disimpan sementara di localStorage untuk preview)
-    window.uploadPhoto = function(event, i) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = e => {
-          localStorage.setItem("foto-"+i, e.target.result);
-          document.getElementById("foto-"+i).src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-
-    // Hapus foto kandidat
-    window.removePhoto = function(i) {
-      localStorage.removeItem("foto-"+i);
-      document.getElementById("foto-"+i).src = defaultFoto;
-    };
-
     // Simpan pilihan ke Firebase
     window.pilih = function(nama, kelas, kandidat) {
       const voteRef = push(ref(db, "votes"));
@@ -172,23 +192,20 @@
         waktu: Date.now()
       }).then(() => {
         alert("Terima kasih, suara Anda sudah tersimpan!");
-        location.reload(); // reset balik ke form nama + kelas
+        location.reload(); // reset biar balik ke awal (isi nama + kelas lagi)
       });
     };
 
     // Reset semua data
-    window.resetAll = function() {
-      const code = document.getElementById("resetCode").value;
-      if (code === "271010") {
-        if (confirm("Yakin ingin menghapus semua data?")) {
-          remove(ref(db, "votes")).then(() => {
-            localStorage.clear();
-            alert("Semua data sudah direset.");
-            location.reload();
-          });
-        }
+    window.resetSemua = function() {
+      const kode = prompt("Masukkan kode untuk reset semua:");
+      if (kode === "271010") {
+        remove(ref(db, "votes")).then(() => {
+          alert("Semua data berhasil dihapus!");
+          location.reload();
+        });
       } else {
-        alert("Kode reset salah!");
+        alert("Kode salah!");
       }
     };
   </script>
