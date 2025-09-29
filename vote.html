@@ -1,17 +1,102 @@
-<!-- form -->
-<div class="box" id="formBox">
-  <div class="row">
-    <input id="nama" type="text" placeholder="Nama" style="min-width:200px" />
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Voting Ketua OSIS SMPN 219 Jakarta</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
 
-    <!-- Pilihan Kelas -->
-    <select id="tingkat" style="padding:10px; border-radius:8px; min-width:80px;">
+    h1 {
+      color: #fff;
+      font-size: 32px;
+      margin-bottom: 20px;
+      animation: fadeDown 1s ease;
+      text-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    }
+
+    .box {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 25px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      animation: fadeUp 1.2s ease;
+    }
+
+    input, select, button {
+      margin: 10px 0;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      width: 100%;
+      font-size: 16px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    input, select {
+      background: rgba(255,255,255,0.9);
+      color: #333;
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(135deg, #ff7eb3, #ff5277);
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(255,82,119,0.4);
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(255,82,119,0.6);
+    }
+
+    .muted {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #f1f1f1;
+      opacity: 0.8;
+    }
+
+    /* Animasi */
+    @keyframes fadeUp {
+      from {opacity:0; transform: translateY(40px);}
+      to {opacity:1; transform: translateY(0);}
+    }
+
+    @keyframes fadeDown {
+      from {opacity:0; transform: translateY(-40px);}
+      to {opacity:1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <h1>Voting Ketua OSIS SMPN 219 Jakarta</h1>
+
+  <div id="formBox" class="box">
+    <input id="nama" type="text" placeholder="Nama">
+    <select id="tingkat">
       <option value="">Pilih Tingkat</option>
       <option value="7">7</option>
       <option value="8">8</option>
       <option value="9">9</option>
     </select>
-
-    <select id="abjad" style="padding:10px; border-radius:8px; min-width:80px; display:none;">
+    <select id="abjad" style="display:none;">
       <option value="">Pilih Abjad</option>
       <option value="A">A</option>
       <option value="B">B</option>
@@ -22,8 +107,15 @@
       <option value="G">G</option>
       <option value="H">H</option>
     </select>
-
     <button id="startBtn">Mulai Voting</button>
+    <div class="muted">Isi nama & kelas dulu, lalu pilih kandidat.</div>
   </div>
-  <div class="muted">Isi nama & kelas dulu, lalu pilih kandidat.</div>
-</div>
+
+  <script>
+    // tampilkan abjad setelah pilih tingkat
+    document.getElementById("tingkat").addEventListener("change", () => {
+      document.getElementById("abjad").style.display = "block";
+    });
+  </script>
+</body>
+</html>
