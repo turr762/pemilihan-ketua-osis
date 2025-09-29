@@ -89,28 +89,31 @@
       kelasSelect.innerHTML = '<option value="">Pilih Kelas</option>';
 
       if (tingkat) {
-        for (let i = 65; i <= 72; i++) { // ASCII A-H (A sampai H)
+        for (let i = 65; i <= 72; i++) { // A sampai H
           let abjad = String.fromCharCode(i);
           let opt = document.createElement("option");
           opt.value = tingkat + abjad;
-          opt.text = tingkat + abjad;
+          opt.text = "Kelas " + tingkat + abjad;
           kelasSelect.appendChild(opt);
         }
       }
     }
 
     function mulaiVoting() {
-      let nama = document.getElementById("nama").value;
+      let nama = document.getElementById("nama").value.trim();
       let kelas = document.getElementById("kelas").value;
 
       if (!nama || !kelas) {
         alert("Isi nama dan kelas dulu!");
         return;
       }
-      // sementara pakai alert, nanti bisa diarahkan ke halaman kandidat
-      alert("Halo " + nama + " dari kelas " + kelas + ". Silakan pilih kandidat.");
-      // contoh redirect ke halaman voting kandidat
-      // window.location.href = "kandidat.html";
+
+      // simpan data ke localStorage biar bisa dipakai di kandidat.html
+      localStorage.setItem("namaPemilih", nama);
+      localStorage.setItem("kelasPemilih", kelas);
+
+      // pindah ke halaman kandidat
+      window.location.href = "kandidat.html";
     }
   </script>
 </body>
