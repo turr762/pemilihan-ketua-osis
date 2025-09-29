@@ -108,6 +108,7 @@
     <div class="candidate-container" id="candidateContainer"></div>
   </div>
 
+<!-- Firebase (module) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
   import { getDatabase, ref, set, push, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
@@ -240,21 +241,8 @@
     await remove(ref(db, `photos/${index}`));
   }
 
-  // --- vote + maksimal 1 suara per siswa ---
   async function vote(index){
     if (!currentUser) { alert("Isi nama & pilih kelas dulu."); return; }
-
-    // cek voter sebelumnya
-    const votersSnap = await get(ref(db, "voters"));
-    const voters = votersSnap.exists() ? votersSnap.val() : {};
-    for (let key in voters) {
-      if (voters[key].nama === currentUser.nama && voters[key].kelas === currentUser.kelas) {
-        alert("Kamu sudah memberikan suara sebelumnya.");
-        return; // stop voting
-      }
-    }
-
-    // push vote
     const vref = push(ref(db, "votes"));
     await set(vref, {
       nama: currentUser.nama,
