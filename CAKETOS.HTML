@@ -144,7 +144,6 @@
     .lock-btn { background: #dc3545; color: #fff; }
     .unlock-btn { background: #ffc107; color: #000; }
 
-    /* Lightbox */
     .lightbox {
       position: fixed;
       top: 0;
@@ -188,85 +187,54 @@
     <img id="lightboxImage" src="" alt="Preview Foto">
   </div>
 
-  <script>
-    // ====== FIREBASE REALTIME / MULTI-DEVICE SETUP ======
-    // Untuk diakses oleh banyak device dan realtime kita menggunakan Firebase Firestore + Storage.
-    // LANGKAH PENTING: ganti konfigurasi di bawah dengan konfigurasi project Firebase-mu.
-    // 1) Buat project di https://console.firebase.google.com/
-    // 2) Aktifkan Firestore (mode produksi atau test sesuai kebutuhan) dan Storage
-    // 3) Di settings project -> web apps -> dapatkan konfigurasi dan tempel di bawah
-
-    // --- Sertakan SDK Firebase (compat) ---
-    // Jika hosting di lingkungan offline atau strict CSP, gunakan paket npm dan build bundler.
-  </script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <script>
-    // ---- ganti config ini dengan milikmu ----
     const firebaseConfig = {
-      apiKey: "REPLACE_WITH_YOUR_APIKEY",
-      authDomain: "REPLACE_WITH_YOUR_AUTHDOMAIN",
-      projectId: "REPLACE_WITH_YOUR_PROJECTID",
-      storageBucket: "REPLACE_WITH_YOUR_STORAGEBUCKET",
-      messagingSenderId: "REPLACE_WITH_MSG_SENDER",
-      appId: "REPLACE_WITH_APPID"
+      apiKey: "AIzaSyBLKP39QYvkfesSSaSsBnI7nwVQKWVT0n8",
+      authDomain: "caketos.firebaseapp.com",
+      databaseURL: "https://caketos-default-rtdb.firebaseio.com",
+      projectId: "caketos",
+      storageBucket: "caketos.firebasestorage.app",
+      messagingSenderId: "311566952069",
+      appId: "1:311566952069:web:8ab4a779f5de257b6cebec",
+      measurementId: "G-WX5T8PK8LN"
     };
 
-    // init firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const storage = firebase.storage();
-
-    // doc path where data akan disimpan sebagai satu dokumen
     const DOC_REF = db.collection('election').doc('osisData');
 
-    // local cache yang kita render
     let data = null;
+    const PASSWORD = "1937460501020304050607080910";
 
-    // subscribe realtime changes
     DOC_REF.onSnapshot(snapshot => {
       if (snapshot.exists) {
         data = snapshot.data().items || buildEmptyData();
         render();
       } else {
-        // dokumen belum ada - buat default
         data = buildEmptyData();
-        DOC_REF.set({ items: data }).then(()=>console.log('Initialized document'));
+        DOC_REF.set({ items: data });
       }
-    }, err => {
-      console.error('Firestore error:', err);
-      // Fallback ke localStorage agar bisa tetap jalan (offline)
-      const local = JSON.parse(localStorage.getItem('osisData') || 'null');
-      data = local || buildEmptyData();
-      render();
     });
 
     function buildEmptyData() {
       return Array.from({ length: 8 }, () => ({ frontImg: '', insideImg: '', text: '', locked: false }));
     }
 
-    // helper upload gambar -> simpan di storage dan update field url di firestore
     async function uploadImage(file, id, type) {
-      // type = 'front' atau 'inside'
       const path = `osis_images/candidate_${id}/${type}_${Date.now()}`;
       const ref = storage.ref(path);
       const snap = await ref.put(file);
-      const url = await snap.ref.getDownloadURL();
-      return url;
+      return await snap.ref.getDownloadURL();
     }
 
     async function saveToServer(items) {
-      // tulis ke firestore
-      try {
-        await DOC_REF.set({ items });
-      } catch (e) {
-        console.error('Failed to save to firestore', e);
-        alert('Gagal menyimpan ke server. Periksa koneksi atau rules Firestore.');
-      }
+      await DOC_REF.set({ items });
     }
 
-    // Render function (tidak berubah lumayan dari versi sebelumnya)
     const container = document.getElementById('envelopeContainer');
     const modal = document.getElementById('modal');
     const closeModal = document.getElementById('closeModal');
@@ -278,6 +246,7 @@
     const unlockBtn = document.getElementById('unlockBtn');
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightboxImage');
+    let selectedIndex = null;
 
     function render() {
       if (!data) return;
@@ -304,15 +273,9 @@
           input.onchange = async e => {
             const file = e.target.files[0];
             if (!file) return;
-            // upload to firebase storage
-            try {
-              const url = await uploadImage(file, i+1, 'front');
-              data[i].frontImg = url;
-              await saveToServer(data);
-            } catch(err) {
-              console.error(err);
-              alert('Gagal mengunggah gambar. Cek koneksi dan rules storage.');
-            }
+            const url = await uploadImage(file, i+1, 'front');
+            data[i].frontImg = url;
+            await saveToServer(data);
           };
           input.click();
         };
@@ -335,14 +298,9 @@
     insideImageInput.onchange = async e => {
       const file = e.target.files[0];
       if (!file) return;
-      try {
-        const url = await uploadImage(file, selectedIndex+1, 'inside');
-        data[selectedIndex].insideImg = url;
-        insideImagePreview.src = url;
-      } catch (err) {
-        console.error(err);
-        alert('Gagal mengunggah gambar.');
-      }
+      const url = await uploadImage(file, selectedIndex+1, 'inside');
+      data[selectedIndex].insideImg = url;
+      insideImagePreview.src = url;
     };
 
     insideImagePreview.onclick = () => {
@@ -356,11 +314,9 @@
     saveBtn.onclick = async () => {
       if (selectedIndex === null) return;
       data[selectedIndex].text = textArea.value;
-      // insideImg sudah diupdate saat upload
       await saveToServer(data);
-      alert('Data disimpan! (realtime)');
+      alert('Data disimpan!');
       modal.style.display = 'none';
-      // render dipicu oleh onSnapshot realtime
     };
 
     lockBtn.onclick = async () => {
@@ -384,14 +340,6 @@
 
     closeModal.onclick = () => modal.style.display = 'none';
     window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
-
-    // backup fallback: simpan local copy when firestore not available
-    window.addEventListener('beforeunload', ()=>{
-      try{ localStorage.setItem('osisData', JSON.stringify(data)); }catch(e){}
-    });
-
-    // initial render if data already fetched by snapshot
-    if (data) render();
   </script>
 </body>
 </html>
