@@ -1,314 +1,219 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Voting Ketua OSIS SMPN 219 Jakarta</title>
+  <meta charset="UTF-8">
+  <title>Pemilihan Ketua OSIS SMPN 219 Jakarta</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: url('https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2022/09/09/1790436385.jpg') no-repeat center center fixed;
       background-size: cover;
-      color: #fff;
-      text-align: center;
+      color: #333;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      position: relative;
-      z-index: 1;
+      padding: 40px 20px;
     }
 
-    /* Overlay agar teks tetap terlihat jelas */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: rgba(60, 0, 130, 0.6);
-      backdrop-filter: blur(2px);
-      z-index: -1;
-    }
-
-    h1 { margin: 10px 0 20px; }
-    .box {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 18px;
-      border-radius: 12px;
-      max-width: 980px;
+    h1 {
       width: 100%;
-      box-sizing: border-box;
-      margin-bottom: 16px;
-      backdrop-filter: blur(4px);
+      text-align: center;
+      color: #fff;
+      text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+      margin-bottom: 40px;
     }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-    input[type="text"], select, input[type="password"], button {
-      padding: 10px; border-radius: 8px; border: 0; font-size: 15px;
-    }
-    button { background: #ff7eb3; color: #fff; cursor: pointer; }
-    button.secondary { background: #ffcc00; color: #000; }
-    .candidate-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 12px; }
-    .candidate {
-      background: rgba(255, 255, 255, 0.15);
-      color: #111;
-      padding: 12px;
-      border-radius: 12px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      box-sizing: border-box;
-    }
-    .candidate img {
-      width: 300px;
-      height: 300px;
-      object-fit: cover;
-      border-radius: 10px;
-      flex: 0 0 300px;
-      background: #ddd;
-    }
-    .candidate .meta {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    .candidate .meta h3 { margin: 0; }
-    .candidate .meta .controls { display: flex; gap: 8px; flex-wrap: wrap; }
-    .small { padding: 8px 10px; font-size: 14px; border-radius: 8px; background: #eee; color: #111; cursor: pointer; border: 0; }
-    .fileInput { background: transparent; color: inherit; }
-    .muted { color: rgba(255, 255, 255, 0.85); font-size: 13px; }
 
-    @media (max-width: 720px) {
-      .candidate { flex-direction: column; align-items: center; text-align: center; }
-      .candidate img { width: 200px; height: 200px; flex: 0 0 200px; }
+    .surat {
+      width: 200px;
+      height: 250px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      margin: 20px;
+      position: relative;
+      transition: all 0.5s ease;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .surat:hover {
+      transform: scale(1.05);
+    }
+
+    .surat img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .surat:hover img {
+      transform: translateY(-20px);
+    }
+
+    .konten {
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .tambah-gambar {
+      display: block;
+      margin: 10px auto;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      background: #36a2eb;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      resize: none;
+    }
+
+    .lock-btn, .close-btn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .lock-btn {
+      background: #ff9f40;
+      color: #fff;
+    }
+
+    .close-btn {
+      background: #999;
+      color: #fff;
     }
   </style>
 </head>
 <body>
-  <h1>Voting Ketua OSIS — SMPN 219 Jakarta</h1>
+  <h1>Pemilihan Ketua OSIS SMPN 219 Jakarta</h1>
 
-  <!-- form -->
-  <div class="box" id="formBox">
-    <div class="row">
-      <input id="nama" type="text" placeholder="Nama" style="min-width:200px" />
-      <select id="kelasTingkat" style="min-width:120px;">
-        <option value="">Pilih Tingkat</option>
-        <option value="7">Kelas 7</option>
-        <option value="8">Kelas 8</option>
-        <option value="9">Kelas 9</option>
-      </select>
-      <select id="kelasSub" style="min-width:120px;" disabled>
-        <option value="">Pilih Subkelas</option>
-      </select>
-      <button id="startBtn">Mulai Voting</button>
+  <!-- Surat untuk 8 calon -->
+  <div id="container"></div>
+
+  <!-- Modal edit teks -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h3 id="modalTitle"></h3>
+      <img id="modalImg" src="" style="width: 100%; border-radius: 8px;">
+      <textarea id="modalText"></textarea>
+      <br>
+      <button class="lock-btn" onclick="lockContent()">🔒 Kunci</button>
+      <button class="close-btn" onclick="closeModal()">Tutup</button>
     </div>
-    <div class="muted">Isi nama & pilih kelas dulu, lalu pilih kandidat.</div>
   </div>
 
-  <!-- kandidat -->
-  <div class="box" id="voteBox" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <div class="muted">Pilih 1 kandidat — foto bisa di-upload/hapus</div>
-      <div class="row">
-        <input id="resetCode" type="password" placeholder="Kode reset (admin)" />
-        <button id="resetBtn" class="secondary">Reset Semua Data</button>
-      </div>
-    </div>
-    <div class="candidate-container" id="candidateContainer"></div>
-  </div>
+  <script>
+    const PASSWORD = "271010";
+    const container = document.getElementById("container");
+    const modal = document.getElementById("modal");
+    const modalText = document.getElementById("modalText");
+    const modalImg = document.getElementById("modalImg");
+    const modalTitle = document.getElementById("modalTitle");
 
-<!-- Firebase script (tidak diubah) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-  import { getDatabase, ref, set, push, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+    let currentIndex = null;
+    let locked = Array(8).fill(false);
+    let kandidatData = Array(8).fill({ text: "", img: "" });
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
-    authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
-    databaseURL: "https://pemilihan-ketos-ecad9-default-rtdb.firebaseio.com",
-    projectId: "pemilihan-ketos-ecad9",
-    storageBucket: "pemilihan-ketos-ecad9.firebasestorage.app",
-    messagingSenderId: "347053662789",
-    appId: "1:347053662789:web:cccd638e31fb3a2491792c",
-    measurementId: "G-8G46RV8ZW0"
-  };
+    // Buat 8 surat calon
+    for (let i = 1; i <= 8; i++) {
+      const surat = document.createElement("div");
+      surat.className = "surat";
+      surat.innerHTML = `
+        <img src="https://via.placeholder.com/200x150?text=Calon+${i}" id="img${i}">
+        <div class="konten">
+          <p><b>Calon ${i}</b></p>
+          <button class="tambah-gambar" onclick="uploadImg(${i})">Ganti Gambar</button>
+        </div>
+      `;
+      surat.onclick = () => openModal(i);
+      container.appendChild(surat);
+    }
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+    function uploadImg(index) {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function() {
+          document.getElementById(`img${index}`).src = reader.result;
+          kandidatData[index - 1].img = reader.result;
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    }
 
-  const KANDIDAT = [
-    "Kandidat 1","Kandidat 2","Kandidat 3","Kandidat 4",
-    "Kandidat 5","Kandidat 6","Kandidat 7","Kandidat 8"
-  ];
+    function openModal(index) {
+      currentIndex = index - 1;
+      modal.style.display = "flex";
+      modalTitle.textContent = `Calon ${index}`;
+      modalImg.src = kandidatData[currentIndex].img || `https://via.placeholder.com/200x150?text=Calon+${index}`;
+      modalText.value = kandidatData[currentIndex].text || "";
+      modalText.disabled = locked[currentIndex];
+    }
 
-  let currentUser = null;
-  let photos = [];
+    function closeModal() {
+      modal.style.display = "none";
+    }
 
-  const photosRef = ref(db, "photos");
-  onValue(photosRef, snap => {
-    const val = snap.val();
-    photos = Array.isArray(val) ? val.slice(0, KANDIDAT.length) : [];
-    if (!Array.isArray(val) && val && typeof val === 'object') {
-      photos = [];
-      for (let i=0;i<KANDIDAT.length;i++){
-        photos[i] = val[i] || "";
+    function lockContent() {
+      if (locked[currentIndex]) {
+        const pass = prompt("Masukkan password untuk membuka kunci:");
+        if (pass === PASSWORD) {
+          locked[currentIndex] = false;
+          alert("Konten berhasil dibuka!");
+          modalText.disabled = false;
+        } else {
+          alert("Password salah!");
+        }
+      } else {
+        kandidatData[currentIndex].text = modalText.value;
+        locked[currentIndex] = true;
+        alert("Konten berhasil dikunci!");
+        modalText.disabled = true;
       }
     }
-    for (let i = 0; i < KANDIDAT.length; i++) if (typeof photos[i] === 'undefined') photos[i] = "";
-    if (document.getElementById("voteBox").style.display !== "none") renderCandidates();
-  });
-
-  function renderCandidates() {
-    const container = document.getElementById("candidateContainer");
-    container.innerHTML = "";
-    KANDIDAT.forEach((name, i) => {
-      const card = document.createElement("div");
-      card.className = "candidate";
-      const img = document.createElement("img");
-      img.src = photos[i] || `https://via.placeholder.com/300.png?text=No+Foto`;
-      img.alt = name;
-      img.loading = "lazy";
-      img.addEventListener('click', () => showFullscreenImage(img.src, name));
-
-      const meta = document.createElement("div");
-      meta.className = "meta";
-
-      const title = document.createElement("h3");
-      title.textContent = name;
-
-      const controls = document.createElement("div");
-      controls.className = "controls";
-
-      const fileInput = document.createElement("input");
-      fileInput.type = "file";
-      fileInput.accept = "image/*";
-      fileInput.className = "fileInput";
-      fileInput.addEventListener("change", (ev) => handleUpload(ev, i));
-
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "Hapus Foto";
-      delBtn.className = "small";
-      delBtn.addEventListener("click", () => handleDeletePhoto(i));
-
-      const pilihBtn = document.createElement("button");
-      pilihBtn.textContent = "Pilih";
-      pilihBtn.className = "small";
-      pilihBtn.style.background = "#4caf50";
-      pilihBtn.style.color = "#fff";
-      pilihBtn.addEventListener("click", () => vote(i));
-
-      controls.appendChild(pilihBtn);
-      controls.appendChild(fileInput);
-      controls.appendChild(delBtn);
-      meta.appendChild(title);
-      meta.appendChild(controls);
-
-      card.appendChild(img);
-      card.appendChild(meta);
-      container.appendChild(card);
-    });
-  }
-
-  function showFullscreenImage(src, title) {
-    const overlay = document.createElement('div');
-    overlay.style.position = 'fixed';
-    overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0,0,0,0.9)';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '9999';
-    overlay.addEventListener('click', () => document.body.removeChild(overlay));
-
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.maxWidth = '95%';
-    img.style.maxHeight = '95%';
-    img.style.borderRadius = '8px';
-    img.alt = title;
-
-    overlay.appendChild(img);
-    document.body.appendChild(overlay);
-  }
-
-  async function handleUpload(ev, index) {
-    const file = ev.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { alert("Pilih file gambar."); return; }
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = e.target.result;
-      await set(ref(db, `photos/${index}`), dataUrl);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  async function handleDeletePhoto(index) {
-    if (!confirm("Hapus foto kandidat ini?")) return;
-    await remove(ref(db, `photos/${index}`));
-  }
-
-  async function vote(index) {
-    if (!currentUser) { alert("Isi nama & pilih kelas dulu."); return; }
-    const vref = push(ref(db, "votes"));
-    await set(vref, {
-      nama: currentUser.nama,
-      kelas: currentUser.kelas,
-      kandidat: KANDIDAT[index],
-      waktu: Date.now()
-    });
-    const pv = push(ref(db, "voters"));
-    await set(pv, { nama: currentUser.nama, kelas: currentUser.kelas, waktu: Date.now() });
-    alert("Terima kasih — suara sudah tercatat.");
-    location.reload();
-  }
-
-  const subkelas = ["A","B","C","D","E","F","G","H"];
-  const kelasSubSelect = document.getElementById("kelasSub");
-  const kelasTingkatSelect = document.getElementById("kelasTingkat");
-
-  kelasTingkatSelect.addEventListener('change', () => {
-    const tingkat = kelasTingkatSelect.value;
-    kelasSubSelect.innerHTML = '<option value="">Pilih Subkelas</option>';
-    if (!tingkat) { kelasSubSelect.disabled = true; return; }
-    subkelas.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = `${tingkat}${s}`;
-      opt.textContent = `${tingkat}${s}`;
-      kelasSubSelect.appendChild(opt);
-    });
-    kelasSubSelect.disabled = false;
-  });
-
-  document.getElementById("startBtn").addEventListener('click', () => {
-    const nama = document.getElementById("nama").value.trim();
-    const kelas = kelasSubSelect.value;
-    if (!nama || !kelas) { alert("Isi nama & pilih kelas dulu."); return; }
-    currentUser = { nama, kelas };
-    document.getElementById("formBox").style.display = 'none';
-    document.getElementById("voteBox").style.display = 'block';
-    renderCandidates();
-  });
-
-  document.getElementById("resetBtn").addEventListener('click', async () => {
-    const code = document.getElementById("resetCode").value;
-    if (code !== "271010") { alert("Kode reset salah!"); return; }
-    if (!confirm("Yakin hapus semua data (votes, photos, voters)?")) return;
-    await remove(ref(db, "votes"));
-    await remove(ref(db, "photos"));
-    await remove(ref(db, "voters"));
-    alert("Semua data telah dihapus.");
-    location.reload();
-  });
-
-  (async function ensureInitialized(){
-    const snap = await get(ref(db, "photos"));
-    if (!snap.exists()){
-      const emptyArr = Array(KANDIDAT.length).fill("");
-      await set(ref(db, "photos"), emptyArr);
-    }
-  })();
-</script>
+  </script>
 </body>
 </html>
