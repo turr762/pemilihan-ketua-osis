@@ -14,153 +14,60 @@
       color: #fff;
       text-align: center;
     }
-
     h1 {
       margin: 20px 0;
-      color: #fff;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
-
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 30px;
-      gap: 25px;
-    }
-
+    .container { display: flex; flex-wrap: wrap; justify-content: center; padding: 30px; gap: 25px; }
     .envelope {
-      position: relative;
-      width: 220px;
-      height: 150px;
-      background: #fefefe;
-      border: 2px solid #b38b59;
-      border-radius: 10px;
+      position: relative; width: 220px; height: 150px; background: #fefefe;
+      border: 2px solid #b38b59; border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      overflow: hidden;
-      cursor: pointer;
-      transform-style: preserve-3d;
-      transition: transform 0.6s;
+      overflow: hidden; cursor: pointer;
+      transform-style: preserve-3d; transition: transform 0.6s;
     }
-
-    .envelope:hover {
-      transform: rotateX(15deg) scale(1.05);
-    }
-
-    .front-photo {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
+    .envelope:hover { transform: rotateX(15deg) scale(1.05); }
+    .front-photo { width: 100%; height: 100%; object-fit: cover; }
     .btn-upload {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 6px 12px;
-      border: none;
-      background-color: #b38b59;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      padding: 6px 12px; border: none; background-color: #b38b59;
+      color: white; border-radius: 6px; cursor: pointer; font-size: 12px;
       transition: background 0.3s;
     }
-
     .btn-upload:hover { background-color: #a07848; }
     .btn-upload:disabled { background-color: #555; cursor: not-allowed; }
-
-    .modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.6);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
+    .modal, .lightbox {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: none; justify-content: center; align-items: center;
     }
-
+    .modal { background: rgba(0,0,0,0.6); z-index: 1000; }
+    .lightbox { background: rgba(0,0,0,0.8); z-index: 2000; }
     .modal-content {
-      background: #fffaf0;
-      color: #333;
-      padding: 20px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 500px;
-      text-align: left;
-      position: relative;
+      background: #fffaf0; color: #333; padding: 20px;
+      border-radius: 10px; width: 90%; max-width: 500px;
+      text-align: left; position: relative;
       box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
-
     .modal-content img {
-      width: 100%;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: transform 0.3s;
+      width: 100%; border-radius: 8px; margin-bottom: 10px;
+      cursor: pointer; transition: transform 0.3s;
     }
-
     .modal-content img:hover { transform: scale(1.02); }
-
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 22px;
-      cursor: pointer;
-      color: #000;
-    }
-
+    .close-btn { position: absolute; top: 10px; right: 10px; font-size: 22px; cursor: pointer; color: #000; }
     textarea {
-      width: 100%;
-      height: 100px;
-      margin-top: 10px;
-      resize: none;
-      padding: 10px;
-      font-size: 14px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      width: 100%; height: 100px; margin-top: 10px; resize: none;
+      padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc;
     }
-
-    .actions {
-      text-align: right;
-      margin-top: 10px;
-    }
-
+    .actions { text-align: right; margin-top: 10px; }
     .actions button {
-      padding: 8px 12px;
-      margin-left: 5px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
+      padding: 8px 12px; margin-left: 5px; border: none;
+      border-radius: 4px; cursor: pointer; font-weight: bold;
     }
-
     .save-btn { background: #28a745; color: #fff; }
     .lock-btn { background: #dc3545; color: #fff; }
     .unlock-btn { background: #ffc107; color: #000; }
-
-    .lightbox {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-    }
-
     .lightbox img {
-      max-width: 90%;
-      max-height: 90%;
-      border-radius: 10px;
+      max-width: 90%; max-height: 90%; border-radius: 10px;
       box-shadow: 0 4px 15px rgba(255,255,255,0.2);
     }
   </style>
@@ -187,53 +94,24 @@
     <img id="lightboxImage" src="" alt="Preview Foto">
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-  <script>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, set, get, update, child } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
     const firebaseConfig = {
-      apiKey: "AIzaSyBLKP39QYvkfesSSaSsBnI7nwVQKWVT0n8",
-      authDomain: "caketos.firebaseapp.com",
-      databaseURL: "https://caketos-default-rtdb.firebaseio.com",
-      projectId: "caketos",
-      storageBucket: "caketos.firebasestorage.app",
-      messagingSenderId: "311566952069",
-      appId: "1:311566952069:web:8ab4a779f5de257b6cebec",
-      measurementId: "G-WX5T8PK8LN"
+      apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
+      authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
+      databaseURL: "https://pemilihan-ketos-ecad9-default-rtdb.firebaseio.com",
+      projectId: "pemilihan-ketos-ecad9",
+      storageBucket: "pemilihan-ketos-ecad9.firebasestorage.app",
+      messagingSenderId: "347053662789",
+      appId: "1:347053662789:web:cccd638e31fb3a2491792c",
+      measurementId: "G-8G46RV8ZW0"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-    const DOC_REF = db.collection('election').doc('osisData');
-
-    let data = null;
-    const PASSWORD = "1937460501020304050607080910";
-
-    DOC_REF.onSnapshot(snapshot => {
-      if (snapshot.exists) {
-        data = snapshot.data().items || buildEmptyData();
-        render();
-      } else {
-        data = buildEmptyData();
-        DOC_REF.set({ items: data });
-      }
-    });
-
-    function buildEmptyData() {
-      return Array.from({ length: 8 }, () => ({ frontImg: '', insideImg: '', text: '', locked: false }));
-    }
-
-    async function uploadImage(file, id, type) {
-      const path = `osis_images/candidate_${id}/${type}_${Date.now()}`;
-      const ref = storage.ref(path);
-      const snap = await ref.put(file);
-      return await snap.ref.getDownloadURL();
-    }
-
-    async function saveToServer(items) {
-      await DOC_REF.set({ items });
-    }
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
     const container = document.getElementById('envelopeContainer');
     const modal = document.getElementById('modal');
@@ -246,15 +124,30 @@
     const unlockBtn = document.getElementById('unlockBtn');
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightboxImage');
+    const PASSWORD = '271010';
     let selectedIndex = null;
+    let data = [];
+
+    async function loadData() {
+      const snapshot = await get(ref(db, 'osisData'));
+      if (snapshot.exists()) {
+        data = snapshot.val();
+      } else {
+        data = Array.from({ length: 8 }, () => ({ frontImg: '', insideImg: '', text: '', locked: false }));
+        await set(ref(db, 'osisData'), data);
+      }
+      render();
+    }
+
+    async function saveDataToFirebase() {
+      await set(ref(db, 'osisData'), data);
+    }
 
     function render() {
-      if (!data) return;
       container.innerHTML = '';
       data.forEach((item, i) => {
         const env = document.createElement('div');
         env.className = 'envelope';
-
         const img = document.createElement('img');
         img.className = 'front-photo';
         img.src = item.frontImg || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Envelope_font_awesome.svg/512px-Envelope_font_awesome.svg.png';
@@ -264,18 +157,21 @@
         uploadBtn.textContent = 'Tambah Gambar';
         uploadBtn.className = 'btn-upload';
         uploadBtn.disabled = item.locked;
-        uploadBtn.onclick = async (ev) => {
-          ev.stopPropagation();
+        uploadBtn.onclick = () => {
           if (item.locked) return alert('Data ini terkunci!');
           const input = document.createElement('input');
           input.type = 'file';
           input.accept = 'image/*';
-          input.onchange = async e => {
+          input.onchange = e => {
             const file = e.target.files[0];
             if (!file) return;
-            const url = await uploadImage(file, i+1, 'front');
-            data[i].frontImg = url;
-            await saveToServer(data);
+            const reader = new FileReader();
+            reader.onload = ev => {
+              item.frontImg = ev.target.result;
+              saveDataToFirebase();
+              render();
+            };
+            reader.readAsDataURL(file);
           };
           input.click();
         };
@@ -283,7 +179,7 @@
 
         env.onclick = () => {
           selectedIndex = i;
-          textArea.value = item.text || '';
+          textArea.value = item.text;
           insideImagePreview.src = item.insideImg || '';
           textArea.disabled = item.locked;
           insideImageInput.disabled = item.locked;
@@ -295,12 +191,15 @@
       });
     }
 
-    insideImageInput.onchange = async e => {
+    insideImageInput.onchange = e => {
       const file = e.target.files[0];
       if (!file) return;
-      const url = await uploadImage(file, selectedIndex+1, 'inside');
-      data[selectedIndex].insideImg = url;
-      insideImagePreview.src = url;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        data[selectedIndex].insideImg = ev.target.result;
+        insideImagePreview.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
     };
 
     insideImagePreview.onclick = () => {
@@ -314,32 +213,39 @@
     saveBtn.onclick = async () => {
       if (selectedIndex === null) return;
       data[selectedIndex].text = textArea.value;
-      await saveToServer(data);
-      alert('Data disimpan!');
+      data[selectedIndex].insideImg = insideImagePreview.src;
+      await saveDataToFirebase();
+      alert('Data disimpan ke Firebase!');
       modal.style.display = 'none';
+      render();
     };
 
     lockBtn.onclick = async () => {
       const pass = prompt('Masukkan password untuk mengunci:');
       if (pass !== PASSWORD) return alert('Password salah!');
       data[selectedIndex].text = textArea.value;
+      data[selectedIndex].insideImg = insideImagePreview.src;
       data[selectedIndex].locked = true;
-      await saveToServer(data);
+      await saveDataToFirebase();
       alert('Data dikunci!');
       modal.style.display = 'none';
+      render();
     };
 
     unlockBtn.onclick = async () => {
       const pass = prompt('Masukkan password untuk membuka kunci:');
       if (pass !== PASSWORD) return alert('Password salah!');
       data[selectedIndex].locked = false;
-      await saveToServer(data);
+      await saveDataToFirebase();
       alert('Data telah dibuka!');
       modal.style.display = 'none';
+      render();
     };
 
     closeModal.onclick = () => modal.style.display = 'none';
     window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+    loadData();
   </script>
 </body>
 </html>
