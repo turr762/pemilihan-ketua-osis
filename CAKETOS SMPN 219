@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visi Misi Calon Ketua OSIS SMPN 219 Jakarta</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #e6d3a3, #c4a484);
+      background-attachment: fixed;
+      background-size: cover;
+      color: #fff;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 20px 0;
+      color: #fff;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 30px;
+      gap: 25px;
+    }
+
+    .envelope {
+      position: relative;
+      width: 220px;
+      height: 150px;
+      background: #fefefe;
+      border: 2px solid #b38b59;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      overflow: hidden;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+
+    .envelope:hover {
+      transform: rotateX(15deg) scale(1.05);
+    }
+
+    .front-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .btn-upload {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 12px;
+      border: none;
+      background-color: #b38b59;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.3s;
+    }
+
+    .btn-upload:hover { background-color: #a07848; }
+    .btn-upload:disabled { background-color: #555; cursor: not-allowed; }
+
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fffaf0;
+      color: #333;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      text-align: left;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+
+    .modal-content img {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .modal-content img:hover { transform: scale(1.02); }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 22px;
+      cursor: pointer;
+      color: #000;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin-top: 10px;
+      resize: none;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .actions {
+      text-align: right;
+      margin-top: 10px;
+    }
+
+    .actions button {
+      padding: 8px 12px;
+      margin-left: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .save-btn { background: #28a745; color: #fff; }
+    .lock-btn { background: #dc3545; color: #fff; }
+    .unlock-btn { background: #ffc107; color: #000; }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .lightbox img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+    }
+  </style>
+</head>
+<body>
+  <h1>Visi Misi Calon Ketua OSIS SMPN 219 Jakarta</h1>
+  <div class="container" id="envelopeContainer"></div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeModal">&times;</span>
+      <input type="file" id="insideImageInput" accept="image/*"><br>
+      <img id="insideImagePreview" alt="Foto Calon">
+      <textarea id="textArea" placeholder="Tulis visi dan misi calon di sini..."></textarea>
+      <div class="actions">
+        <button class="save-btn" id="saveBtn">Simpan</button>
+        <button class="lock-btn" id="lockBtn">Kunci</button>
+        <button class="unlock-btn" id="unlockBtn" style="display:none;">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <img id="lightboxImage" src="" alt="Preview Foto">
+  </div>
+
+  <script>
+    const container = document.getElementById('envelopeContainer');
+    const modal = document.getElementById('modal');
+    const closeModal = document.getElementById('closeModal');
+    const textArea = document.getElementById('textArea');
+    const insideImageInput = document.getElementById('insideImageInput');
+    const insideImagePreview = document.getElementById('insideImagePreview');
+    const saveBtn = document.getElementById('saveBtn');
+    const lockBtn = document.getElementById('lockBtn');
+    const unlockBtn = document.getElementById('unlockBtn');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightboxImage');
+
+    const PASSWORD = '1937460501020304050607080910';
+    let selectedIndex = null;
+
+    let data = JSON.parse(localStorage.getItem('osisData') || '[]');
+    if (data.length < 8) {
+      data = Array.from({ length: 8 }, () => ({ frontImg: '', insideImg: '', text: '', locked: false }));
+    }
+
+    function saveData() { localStorage.setItem('osisData', JSON.stringify(data)); }
+
+    function render() {
+      container.innerHTML = '';
+      data.forEach((item, i) => {
+        const env = document.createElement('div');
+        env.className = 'envelope';
+
+        const img = document.createElement('img');
+        img.className = 'front-photo';
+        img.src = item.frontImg || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Envelope_font_awesome.svg/512px-Envelope_font_awesome.svg.png';
+        env.appendChild(img);
+
+        const uploadBtn = document.createElement('button');
+        uploadBtn.textContent = 'Tambah Gambar';
+        uploadBtn.className = 'btn-upload';
+        uploadBtn.disabled = item.locked;
+        uploadBtn.onclick = () => {
+          if (item.locked) return alert('Data ini terkunci!');
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+              item.frontImg = ev.target.result;
+              saveData();
+              render();
+            };
+            reader.readAsDataURL(file);
+          };
+          input.click();
+        };
+        env.appendChild(uploadBtn);
+
+        env.onclick = () => {
+          selectedIndex = i;
+          textArea.value = item.text;
+          insideImagePreview.src = item.insideImg || '';
+          textArea.disabled = item.locked;
+          insideImageInput.disabled = item.locked;
+          lockBtn.style.display = item.locked ? 'none' : 'inline-block';
+          unlockBtn.style.display = item.locked ? 'inline-block' : 'none';
+          modal.style.display = 'flex';
+        };
+        container.appendChild(env);
+      });
+    }
+
+    insideImageInput.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        data[selectedIndex].insideImg = ev.target.result;
+        insideImagePreview.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    insideImagePreview.onclick = () => {
+      if (!insideImagePreview.src) return;
+      lightboxImage.src = insideImagePreview.src;
+      lightbox.style.display = 'flex';
+    };
+
+    lightbox.onclick = () => { lightbox.style.display = 'none'; };
+
+    saveBtn.onclick = () => {
+      if (selectedIndex === null) return;
+      data[selectedIndex].text = textArea.value;
+      data[selectedIndex].insideImg = insideImagePreview.src;
+      saveData();
+      alert('Data disimpan!');
+      modal.style.display = 'none';
+      render();
+    };
+
+    lockBtn.onclick = () => {
+      const pass = prompt('Masukkan password untuk mengunci:');
+      if (pass !== PASSWORD) return alert('Password salah!');
+      data[selectedIndex].text = textArea.value;
+      data[selectedIndex].insideImg = insideImagePreview.src;
+      data[selectedIndex].locked = true;
+      saveData();
+      alert('Data dikunci!');
+      modal.style.display = 'none';
+      render();
+    };
+
+    unlockBtn.onclick = () => {
+      const pass = prompt('Masukkan password untuk membuka kunci:');
+      if (pass !== PASSWORD) return alert('Password salah!');
+      data[selectedIndex].locked = false;
+      saveData();
+      alert('Data telah dibuka!');
+      modal.style.display = 'none';
+      render();
+    };
+
+    closeModal.onclick = () => modal.style.display = 'none';
+    window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+    render();
+  </script>
+</body>
+</html>
