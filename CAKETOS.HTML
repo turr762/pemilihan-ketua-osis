@@ -14,61 +14,138 @@
       color: #fff;
       text-align: center;
     }
+
     h1 {
       margin: 20px 0;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     }
-    .container { display: flex; flex-wrap: wrap; justify-content: center; padding: 30px; gap: 25px; }
-    .envelope {
-      position: relative; width: 220px; height: 150px; background: #fefefe;
-      border: 2px solid #b38b59; border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      overflow: hidden; cursor: pointer;
-      transform-style: preserve-3d; transition: transform 0.6s;
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 30px;
+      gap: 35px;
     }
-    .envelope:hover { transform: rotateX(15deg) scale(1.05); }
-    .front-photo { width: 100%; height: 100%; object-fit: cover; }
+
+    .envelope {
+      position: relative;
+      width: 300px;   /* lebih besar */
+      height: 220px;  /* lebih besar */
+      background: #fefefe;
+      border: 2px solid #b38b59;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+      overflow: hidden;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform 0.5s, box-shadow 0.3s;
+    }
+
+    .envelope:hover {
+      transform: rotateX(10deg) scale(1.08);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    .front-photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
     .btn-upload {
-      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-      padding: 6px 12px; border: none; background-color: #b38b59;
-      color: white; border-radius: 6px; cursor: pointer; font-size: 12px;
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 14px;
+      border: none;
+      background-color: #b38b59;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
       transition: background 0.3s;
     }
+
     .btn-upload:hover { background-color: #a07848; }
     .btn-upload:disabled { background-color: #555; cursor: not-allowed; }
+
     .modal, .lightbox {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       display: none; justify-content: center; align-items: center;
     }
     .modal { background: rgba(0,0,0,0.6); z-index: 1000; }
     .lightbox { background: rgba(0,0,0,0.8); z-index: 2000; }
+
     .modal-content {
-      background: #fffaf0; color: #333; padding: 20px;
-      border-radius: 10px; width: 90%; max-width: 500px;
-      text-align: left; position: relative;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      background: #fffaf0;
+      color: #333;
+      padding: 25px;
+      border-radius: 12px;
+      width: 95%;
+      max-width: 600px;
+      text-align: left;
+      position: relative;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     }
+
     .modal-content img {
-      width: 100%; border-radius: 8px; margin-bottom: 10px;
-      cursor: pointer; transition: transform 0.3s;
+      width: 100%;
+      max-height: 350px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      object-fit: cover;
+      cursor: pointer;
+      transition: transform 0.3s;
     }
-    .modal-content img:hover { transform: scale(1.02); }
-    .close-btn { position: absolute; top: 10px; right: 10px; font-size: 22px; cursor: pointer; color: #000; }
+
+    .modal-content img:hover { transform: scale(1.03); }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #000;
+    }
+
     textarea {
-      width: 100%; height: 100px; margin-top: 10px; resize: none;
-      padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc;
+      width: 100%;
+      height: 120px;
+      margin-top: 10px;
+      resize: none;
+      padding: 10px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
-    .actions { text-align: right; margin-top: 10px; }
+
+    .actions {
+      text-align: right;
+      margin-top: 15px;
+    }
+
     .actions button {
-      padding: 8px 12px; margin-left: 5px; border: none;
-      border-radius: 4px; cursor: pointer; font-weight: bold;
+      padding: 9px 14px;
+      margin-left: 8px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
     }
+
     .save-btn { background: #28a745; color: #fff; }
     .lock-btn { background: #dc3545; color: #fff; }
     .unlock-btn { background: #ffc107; color: #000; }
+
     .lightbox img {
-      max-width: 90%; max-height: 90%; border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+      max-width: 95%;
+      max-height: 95%;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(255,255,255,0.25);
     }
   </style>
 </head>
@@ -94,10 +171,9 @@
     <img id="lightboxImage" src="" alt="Preview Foto">
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getDatabase, ref, set, get, update, child } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
@@ -124,7 +200,8 @@
     const unlockBtn = document.getElementById('unlockBtn');
     const lightbox = document.getElementById('lightbox');
     const lightboxImage = document.getElementById('lightboxImage');
-    const PASSWORD = '271010';
+
+    const PASSWORD = '1937460501020304050607080910';
     let selectedIndex = null;
     let data = [];
 
@@ -148,6 +225,7 @@
       data.forEach((item, i) => {
         const env = document.createElement('div');
         env.className = 'envelope';
+
         const img = document.createElement('img');
         img.className = 'front-photo';
         img.src = item.frontImg || 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Envelope_font_awesome.svg/512px-Envelope_font_awesome.svg.png';
@@ -223,8 +301,6 @@
     lockBtn.onclick = async () => {
       const pass = prompt('Masukkan password untuk mengunci:');
       if (pass !== PASSWORD) return alert('Password salah!');
-      data[selectedIndex].text = textArea.value;
-      data[selectedIndex].insideImg = insideImagePreview.src;
       data[selectedIndex].locked = true;
       await saveDataToFirebase();
       alert('Data dikunci!');
