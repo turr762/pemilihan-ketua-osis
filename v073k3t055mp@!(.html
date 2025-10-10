@@ -7,41 +7,56 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg,#6a11cb,#2575fc);
+      background: url('https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2022/09/09/1790436385.jpg') no-repeat center center fixed;
+      background-size: cover;
       color: #fff;
       text-align: center;
       min-height: 100vh;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      padding:20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
     }
+
+    /* Overlay agar teks tetap terlihat jelas */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: rgba(60, 0, 130, 0.6);
+      backdrop-filter: blur(2px);
+      z-index: -1;
+    }
+
     h1 { margin: 10px 0 20px; }
     .box {
-      background: rgba(255,255,255,0.08);
+      background: rgba(255, 255, 255, 0.1);
       padding: 18px;
       border-radius: 12px;
       max-width: 980px;
       width: 100%;
       box-sizing: border-box;
       margin-bottom: 16px;
+      backdrop-filter: blur(4px);
     }
-    .row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
     input[type="text"], select, input[type="password"], button {
-      padding:10px; border-radius:8px; border:0; font-size:15px;
+      padding: 10px; border-radius: 8px; border: 0; font-size: 15px;
     }
-    button { background:#ff7eb3; color:#fff; cursor:pointer; }
-    button.secondary { background:#ffcc00; color:#000; }
-    .candidate-container { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:14px; margin-top:12px; }
+    button { background: #ff7eb3; color: #fff; cursor: pointer; }
+    button.secondary { background: #ffcc00; color: #000; }
+    .candidate-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 12px; }
     .candidate {
-      background: rgba(255,255,255,0.12);
+      background: rgba(255, 255, 255, 0.15);
       color: #111;
       padding: 12px;
-      border-radius:12px;
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      box-sizing:border-box;
+      border-radius: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      box-sizing: border-box;
     }
     .candidate img {
       width: 300px;
@@ -53,19 +68,20 @@
     }
     .candidate .meta {
       flex: 1 1 auto;
-      display:flex;
-      flex-direction:column;
-      align-items:flex-start;
-      gap:8px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
     }
-    .candidate .meta h3 { margin:0; }
-    .candidate .meta .controls { display:flex; gap:8px; flex-wrap:wrap; }
-    .small { padding:8px 10px; font-size:14px; border-radius:8px; background:#eee; color:#111; cursor:pointer; border:0; }
-    .fileInput { background:transparent; color:inherit; }
-    .muted { color: rgba(255,255,255,0.8); font-size:13px; }
-    @media (max-width:720px){
-      .candidate { flex-direction:column; align-items:center; text-align:center; }
-      .candidate img{ width:200px; height:200px; flex:0 0 200px; }
+    .candidate .meta h3 { margin: 0; }
+    .candidate .meta .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .small { padding: 8px 10px; font-size: 14px; border-radius: 8px; background: #eee; color: #111; cursor: pointer; border: 0; }
+    .fileInput { background: transparent; color: inherit; }
+    .muted { color: rgba(255, 255, 255, 0.85); font-size: 13px; }
+
+    @media (max-width: 720px) {
+      .candidate { flex-direction: column; align-items: center; text-align: center; }
+      .candidate img { width: 200px; height: 200px; flex: 0 0 200px; }
     }
   </style>
 </head>
@@ -76,20 +92,15 @@
   <div class="box" id="formBox">
     <div class="row">
       <input id="nama" type="text" placeholder="Nama" style="min-width:200px" />
-
-      <!-- dropdown kelas -->
       <select id="kelasTingkat" style="min-width:120px;">
         <option value="">Pilih Tingkat</option>
         <option value="7">Kelas 7</option>
         <option value="8">Kelas 8</option>
         <option value="9">Kelas 9</option>
       </select>
-
-      <!-- dropdown subkelas -->
       <select id="kelasSub" style="min-width:120px;" disabled>
         <option value="">Pilih Subkelas</option>
       </select>
-
       <button id="startBtn">Mulai Voting</button>
     </div>
     <div class="muted">Isi nama & pilih kelas dulu, lalu pilih kandidat.</div>
@@ -104,11 +115,10 @@
         <button id="resetBtn" class="secondary">Reset Semua Data</button>
       </div>
     </div>
-
     <div class="candidate-container" id="candidateContainer"></div>
   </div>
 
-<!-- Firebase (module) -->
+<!-- Firebase script (tidak diubah) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
   import { getDatabase, ref, set, push, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
@@ -129,7 +139,7 @@
 
   const KANDIDAT = [
     "Kandidat 1","Kandidat 2","Kandidat 3","Kandidat 4",
-      "Kandidat 5","Kandidat 6","Kandidat 7","Kandidat 8"
+    "Kandidat 5","Kandidat 6","Kandidat 7","Kandidat 8"
   ];
 
   let currentUser = null;
@@ -155,12 +165,11 @@
     KANDIDAT.forEach((name, i) => {
       const card = document.createElement("div");
       card.className = "candidate";
-
       const img = document.createElement("img");
       img.src = photos[i] || `https://via.placeholder.com/300.png?text=No+Foto`;
       img.alt = name;
       img.loading = "lazy";
-      img.addEventListener('click', () => { showFullscreenImage(img.src, name); });
+      img.addEventListener('click', () => showFullscreenImage(img.src, name));
 
       const meta = document.createElement("div");
       meta.className = "meta";
@@ -192,7 +201,6 @@
       controls.appendChild(pilihBtn);
       controls.appendChild(fileInput);
       controls.appendChild(delBtn);
-
       meta.appendChild(title);
       meta.appendChild(controls);
 
@@ -202,22 +210,22 @@
     });
   }
 
-  function showFullscreenImage(src, title){
+  function showFullscreenImage(src, title) {
     const overlay = document.createElement('div');
-    overlay.style.position='fixed';
-    overlay.style.inset='0';
-    overlay.style.background='rgba(0,0,0,0.9)';
-    overlay.style.display='flex';
-    overlay.style.alignItems='center';
-    overlay.style.justifyContent='center';
-    overlay.style.zIndex='9999';
-    overlay.addEventListener('click',()=>document.body.removeChild(overlay));
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0,0,0,0.9)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '9999';
+    overlay.addEventListener('click', () => document.body.removeChild(overlay));
 
     const img = document.createElement('img');
     img.src = src;
-    img.style.maxWidth='95%';
-    img.style.maxHeight='95%';
-    img.style.borderRadius='8px';
+    img.style.maxWidth = '95%';
+    img.style.maxHeight = '95%';
+    img.style.borderRadius = '8px';
     img.alt = title;
 
     overlay.appendChild(img);
@@ -236,12 +244,12 @@
     reader.readAsDataURL(file);
   }
 
-  async function handleDeletePhoto(index){
-    if(!confirm("Hapus foto kandidat ini?")) return;
+  async function handleDeletePhoto(index) {
+    if (!confirm("Hapus foto kandidat ini?")) return;
     await remove(ref(db, `photos/${index}`));
   }
 
-  async function vote(index){
+  async function vote(index) {
     if (!currentUser) { alert("Isi nama & pilih kelas dulu."); return; }
     const vref = push(ref(db, "votes"));
     await set(vref, {
@@ -252,12 +260,10 @@
     });
     const pv = push(ref(db, "voters"));
     await set(pv, { nama: currentUser.nama, kelas: currentUser.kelas, waktu: Date.now() });
-
     alert("Terima kasih — suara sudah tercatat.");
     location.reload();
   }
 
-  // --- kelas dropdown logic ---
   const subkelas = ["A","B","C","D","E","F","G","H"];
   const kelasSubSelect = document.getElementById("kelasSub");
   const kelasTingkatSelect = document.getElementById("kelasTingkat");
@@ -265,10 +271,7 @@
   kelasTingkatSelect.addEventListener('change', () => {
     const tingkat = kelasTingkatSelect.value;
     kelasSubSelect.innerHTML = '<option value="">Pilih Subkelas</option>';
-    if (!tingkat) {
-      kelasSubSelect.disabled = true;
-      return;
-    }
+    if (!tingkat) { kelasSubSelect.disabled = true; return; }
     subkelas.forEach(s => {
       const opt = document.createElement('option');
       opt.value = `${tingkat}${s}`;
