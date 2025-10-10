@@ -27,8 +27,14 @@
       margin-bottom: 16px;
     }
     .row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
-    input[type="text"], select, input[type="password"], button {
+    input[type="text"], select, input[type="password"], button, textarea {
       padding:10px; border-radius:8px; border:0; font-size:15px;
+    }
+    textarea {
+      resize: vertical;
+      width: 100%;
+      min-height: 80px;
+      box-sizing: border-box;
     }
     button { background:#ff7eb3; color:#fff; cursor:pointer; }
     button.secondary { background:#ffcc00; color:#000; }
@@ -58,7 +64,7 @@
       align-items:flex-start;
       gap:8px;
     }
-    .candidate .meta h3 { margin:0; }
+    .candidate .meta h3 { margin:0; color:#fff; }
     .candidate .meta .controls { display:flex; gap:8px; flex-wrap:wrap; }
     .small { padding:8px 10px; font-size:14px; border-radius:8px; background:#eee; color:#111; cursor:pointer; border:0; }
     .fileInput { background:transparent; color:inherit; }
@@ -74,25 +80,26 @@
 
   <!-- form -->
   <div class="box" id="formBox">
+
+    <!-- Foto & Visi Misi Kandidat -->
+    <div class="candidate-container" id="frontCandidates" style="margin-bottom:15px;">
+      <!-- otomatis diisi lewat script -->
+    </div>
+
     <div class="row">
       <input id="nama" type="text" placeholder="Nama" style="min-width:200px" />
-
-      <!-- dropdown kelas -->
       <select id="kelasTingkat" style="min-width:120px;">
         <option value="">Pilih Tingkat</option>
         <option value="7">Kelas 7</option>
         <option value="8">Kelas 8</option>
         <option value="9">Kelas 9</option>
       </select>
-
-      <!-- dropdown subkelas -->
       <select id="kelasSub" style="min-width:120px;" disabled>
         <option value="">Pilih Subkelas</option>
       </select>
-
       <button id="startBtn">Mulai Voting</button>
     </div>
-    <div class="muted">Isi nama & pilih kelas dulu, lalu pilih kandidat.</div>
+    <div class="muted">Isi nama, pilih kelas, dan tulis visi misi dulu sebelum memilih kandidat.</div>
   </div>
 
   <!-- kandidat -->
@@ -146,9 +153,45 @@
       }
     }
     for (let i = 0; i < KANDIDAT.length; i++) if (typeof photos[i] === 'undefined') photos[i] = "";
+    renderFrontCandidates();
     if (document.getElementById("voteBox").style.display !== "none") renderCandidates();
   });
 
+  // ==== BAGIAN BARU: render foto + visi misi di depan ====
+  function renderFrontCandidates() {
+    const container = document.getElementById("frontCandidates");
+    container.innerHTML = "";
+    KANDIDAT.forEach((name, i) => {
+      const card = document.createElement("div");
+      card.className = "candidate";
+      card.style.background = "rgba(255,255,255,0.15)";
+      card.style.color = "#fff";
+
+      const img = document.createElement("img");
+      img.src = photos[i] || `https://via.placeholder.com/300.png?text=Kandidat+${i+1}`;
+      img.alt = name;
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+
+      const title = document.createElement("h3");
+      title.textContent = name;
+
+      const visiInput = document.createElement("textarea");
+      visiInput.placeholder = "Visi Misi";
+      visiInput.id = `visiMisi${i}`;
+      visiInput.style.background = "rgba(255,255,255,0.2)";
+      visiInput.style.color = "#fff";
+
+      meta.appendChild(title);
+      meta.appendChild(visiInput);
+      card.appendChild(img);
+      card.appendChild(meta);
+      container.appendChild(card);
+    });
+  }
+
+  // ==== RENDER KANDIDAT UTAMA (voting) ====
   function renderCandidates() {
     const container = document.getElementById("candidateContainer");
     container.innerHTML = "";
@@ -195,7 +238,6 @@
 
       meta.appendChild(title);
       meta.appendChild(controls);
-
       card.appendChild(img);
       card.appendChild(meta);
       container.appendChild(card);
@@ -241,8 +283,23 @@
     await remove(ref(db, `photos/${index}`));
   }
 
+  // ==== VOTING: hanya boleh 1 suara ====
   async function vote(index){
     if (!currentUser) { alert("Isi nama & pilih kelas dulu."); return; }
+
+    const votersSnap = await get(ref(db, "voters"));
+    if (votersSnap.exists()) {
+      const voters = Object.values(votersSnap.val());
+      const sudahVote = voters.some(v => 
+        v.nama.toLowerCase() === currentUser.nama.toLowerCase() && 
+        v.kelas === currentUser.kelas
+      );
+      if (sudahVote) {
+        alert("Kamu sudah pernah memberikan suara. Hanya boleh 1 kali voting.");
+        return;
+      }
+    }
+
     const vref = push(ref(db, "votes"));
     await set(vref, {
       nama: currentUser.nama,
@@ -250,14 +307,15 @@
       kandidat: KANDIDAT[index],
       waktu: Date.now()
     });
+
     const pv = push(ref(db, "voters"));
     await set(pv, { nama: currentUser.nama, kelas: currentUser.kelas, waktu: Date.now() });
 
-    alert("Terima kasih — suara sudah tercatat.");
+    alert("Terima kasih — suara kamu sudah tercatat.");
     location.reload();
   }
 
-  // --- kelas dropdown logic ---
+  // ==== Dropdown kelas ====
   const subkelas = ["A","B","C","D","E","F","G","H"];
   const kelasSubSelect = document.getElementById("kelasSub");
   const kelasTingkatSelect = document.getElementById("kelasTingkat");
@@ -278,27 +336,40 @@
     kelasSubSelect.disabled = false;
   });
 
-  document.getElementById("startBtn").addEventListener('click', () => {
+  // ==== Tombol mulai voting ====
+  document.getElementById("startBtn").addEventListener('click', async () => {
     const nama = document.getElementById("nama").value.trim();
     const kelas = kelasSubSelect.value;
     if (!nama || !kelas) { alert("Isi nama & pilih kelas dulu."); return; }
+
+    // Simpan visi misi ke database
+    const visiData = {};
+    for (let i = 0; i < KANDIDAT.length; i++) {
+      const isi = document.getElementById(`visiMisi${i}`).value.trim();
+      visiData[`kandidat_${i+1}`] = isi;
+    }
+    await set(ref(db, "visiMisi"), visiData);
+
     currentUser = { nama, kelas };
     document.getElementById("formBox").style.display = 'none';
     document.getElementById("voteBox").style.display = 'block';
     renderCandidates();
   });
 
+  // ==== Reset data admin ====
   document.getElementById("resetBtn").addEventListener('click', async () => {
     const code = document.getElementById("resetCode").value;
     if (code !== "271010") { alert("Kode reset salah!"); return; }
-    if (!confirm("Yakin hapus semua data (votes, photos, voters)?")) return;
+    if (!confirm("Yakin hapus semua data (votes, photos, voters, visi misi)?")) return;
     await remove(ref(db, "votes"));
     await remove(ref(db, "photos"));
     await remove(ref(db, "voters"));
+    await remove(ref(db, "visiMisi"));
     alert("Semua data telah dihapus.");
     location.reload();
   });
 
+  // ==== Inisialisasi awal ====
   (async function ensureInitialized(){
     const snap = await get(ref(db, "photos"));
     if (!snap.exists()){
