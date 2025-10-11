@@ -2,98 +2,65 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Tracker - Kartu Undangan OSIS</title>
+  <title>Tracking Undangan OSIS</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background:#fff; color:#111; }
-    h1 { margin-bottom: 10px; }
-    table { border-collapse: collapse; width: 100%; max-width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background:#f2f2f2; }
-    .btn { margin: 6px 4px; padding: 8px 12px; font-size: 14px; border-radius:6px; cursor:pointer; }
-    .btn-primary { background:#007bff; color:white; border:none; }
-    .btn-danger { background:#d9534f; color:white; border:none; }
-    .small { font-size:13px; color:#666; }
+    body { font-family: Arial, sans-serif; background:#f8fafc; padding:20px; }
+    table { border-collapse: collapse; width: 100%; background:white; box-shadow:0 0 10px #ccc; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background-color: #007bff; color: white; }
+    button { margin-top:10px; padding:8px 12px; background:red; color:white; border:none; border-radius:5px; cursor:pointer; }
   </style>
 </head>
 <body>
-  <h1>Tracker Aktivitas - Kartu Undangan OSIS</h1>
-  <div>
-    <strong>Total Generated:</strong> <span id="totalCount">0</span>
-    &nbsp; | &nbsp;
-    <button class="btn btn-primary" id="exportCsv">Export CSV</button>
-    <button class="btn btn-danger" id="clearAll">Hapus Semua Data</button>
-  </div>
-
-  <div class="small">Log otomatis terupdate ketika ada yang menekan "Buat Kartu" di halaman generator (origin sama).</div>
-
-  <table id="logTable">
-    <thead>
-      <tr><th>#</th><th>Waktu (ISO)</th><th>Nama</th><th>Sebagai</th><th>Keterangan</th><th>Bilik</th></tr>
-    </thead>
-    <tbody></tbody>
+  <h2>📊 Daftar Kartu Undangan yang Sudah Dibuat</h2>
+  <table>
+    <thead><tr><th>Nama</th><th>Sebagai</th><th>Keterangan</th><th>Bilik</th><th>Waktu</th></tr></thead>
+    <tbody id="dataTable"></tbody>
   </table>
+  <input type="password" id="pass" placeholder="Masukkan sandi untuk hapus data">
+  <button onclick="hapusData()">Hapus Semua Data</button>
 
-  <script>
-    const LOG_KEY = "kartu_logs_v1";
-    const pw = "Syafitriimut"; // sandi untuk menghapus
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    function loadLogs() {
-      const logs = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
-      const tbody = document.querySelector("#logTable tbody");
-      tbody.innerHTML = "";
-      logs.forEach((l, i) => {
+    const firebaseConfig = {
+      apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
+      authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
+      databaseURL: "https://pemilihan-ketos-ecad9-default-rtdb.firebaseio.com",
+      projectId: "pemilihan-ketos-ecad9",
+      storageBucket: "pemilihan-ketos-ecad9.firebasestorage.app",
+      messagingSenderId: "347053662789",
+      appId: "1:347053662789:web:cccd638e31fb3a2491792c",
+      measurementId: "G-8G46RV8ZW0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const table = document.getElementById("dataTable");
+
+    onValue(ref(db, "undangan"), (snapshot) => {
+      table.innerHTML = "";
+      snapshot.forEach(child => {
+        const data = child.val();
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${i+1}</td><td>${l.time}</td><td>${escapeHtml(l.name)}</td><td>${escapeHtml(l.role)}</td><td>${escapeHtml(l.keterangan)}</td><td>${escapeHtml(l.bilik)}</td>`;
-        tbody.appendChild(tr);
+        tr.innerHTML = `
+          <td>${data.name}</td>
+          <td>${data.role}</td>
+          <td>${data.keterangan}</td>
+          <td>${data.bilik}</td>
+          <td>${new Date(data.time).toLocaleString()}</td>
+        `;
+        table.appendChild(tr);
       });
-      document.getElementById("totalCount").textContent = logs.length;
-    }
-
-    function escapeHtml(s) {
-      if (!s) return "";
-      return s.toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    }
-
-    // Export CSV
-    document.getElementById("exportCsv").addEventListener("click", () => {
-      const logs = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
-      if (!logs.length) { alert("Belum ada data untuk diexport."); return; }
-      const header = ["time","name","role","keterangan","bilik"];
-      const rows = logs.map(r => [r.time, r.name, r.role, r.keterangan, r.bilik]);
-      const csv = [header, ...rows].map(r => r.map(cell => `"${(cell||"").toString().replace(/"/g,'""')}"`).join(",")).join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "kartu_logs.csv"; a.click();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
     });
 
-    // Clear all with password prompt
-    document.getElementById("clearAll").addEventListener("click", () => {
-      const input = prompt("Masukkan sandi untuk menghapus semua data:");
-      if (input === null) return;
-      if (input === pw) {
-        localStorage.removeItem(LOG_KEY);
-        loadLogs();
-        alert("Semua data telah dihapus.");
-      } else {
-        alert("Sandi salah. Aksi dibatalkan.");
-      }
-    });
-
-    // listen to custom event dispatched by generator page when logs update
-    window.addEventListener('kartu_logs_updated', (e) => {
-      // langsung reload logs (e.detail berisi entry terbaru)
-      loadLogs();
-    });
-
-    // also reload periodically and at startup in case other tab updated
-    window.addEventListener('storage', (e) => {
-      if (e.key === LOG_KEY) loadLogs();
-    });
-
-    // init
-    loadLogs();
+    window.hapusData = () => {
+      const pass = document.getElementById("pass").value;
+      if (pass !== "Syafitriimut") return alert("Sandi salah!");
+      if (!confirm("Yakin ingin menghapus semua data?")) return;
+      remove(ref(db, "undangan"));
+    };
   </script>
 </body>
 </html>
