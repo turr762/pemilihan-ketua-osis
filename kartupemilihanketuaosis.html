@@ -54,21 +54,32 @@
     // --- localStorage key untuk menyimpan logs ---
     const LOG_KEY = "kartu_logs_v1";
 
-    // util: tambahkan log ke localStorage
-    function addLog(entry) {
-      const logs = JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
-      logs.push(entry);
-      localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-      // dispatch event supaya halaman tracker dapat mendengar
-      window.dispatchEvent(new CustomEvent('kartu_logs_updated', { detail: entry }));
+    function loadLogs() {
+      return JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
     }
 
-    // util: format timestamp
+    function saveLogs(logs) {
+      localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+    }
+
+    // tambah log baru hanya jika belum ada nama yang sama persis
+    function addLog(entry) {
+      const logs = loadLogs();
+      const duplikat = logs.find(l => l.name.toLowerCase().trim() === entry.name.toLowerCase().trim());
+      if (duplikat) {
+        alert(`Nama "${entry.name}" sudah pernah dibuat kartunya!`);
+        return false; // jangan lanjut
+      }
+      logs.push(entry);
+      saveLogs(logs);
+      window.dispatchEvent(new CustomEvent('kartu_logs_updated', { detail: entry }));
+      return true;
+    }
+
     function nowISO() {
       return new Date().toISOString();
     }
 
-    // --- UI & template ---
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
     const buatBtn = document.getElementById("buatBtn");
@@ -76,12 +87,10 @@
 
     let templateImage = new Image();
     templateImage.crossOrigin = "anonymous";
-    // default template (kamu bisa ganti link jika mau)
     templateImage.src = "https://raw.githubusercontent.com/turr762/pemilihan-ketua-osis/refs/heads/main/siswa.jpg";
     templateImage.onload = () => {
       canvas.width = templateImage.width;
       canvas.height = templateImage.height;
-      // draw initial preview (hidden)
       ctx.drawImage(templateImage, 0, 0);
     };
 
@@ -108,8 +117,7 @@
       return mapping[huruf] || "Bilik Bebas";
     }
 
-    // draw and return blob promise
-    function drawCardToBlob({ nameText, roleText, keteranganText, bilikText }) {
+    async function drawCardToBlob({ nameText, roleText, keteranganText, bilikText }) {
       return new Promise((resolve) => {
         const fixedHeight = 1080;
         const scale = fixedHeight / templateImage.height;
@@ -135,12 +143,10 @@
         ctx.font = "bold 32px Arial";
         ctx.fillText(bilikText, canvas.width / 2, canvas.height * 0.44);
 
-        // hasil blob
         canvas.toBlob(blob => resolve(blob), "image/png", 1.0);
       });
     }
 
-    // ketika tombol Buat Kartu dipencet: generate preview dan log
     buatBtn.addEventListener("click", async () => {
       const nama = document.getElementById("nama").value.trim();
       const role = document.getElementById("sebagai").value;
@@ -159,31 +165,24 @@
         bilik = "Bilik Bebas";
       }
 
-      // gambar preview dan tampilkan tombol download
+      // cek duplikat sebelum generate
+      const entry = { time: nowISO(), name: nama, role: role, keterangan: keterangan, bilik: bilik };
+      const ok = addLog(entry);
+      if (!ok) return; // stop kalau nama duplikat
+
       const blob = await drawCardToBlob({ nameText:nama, roleText:role, keteranganText:keterangan, bilikText:bilik });
       canvas.style.display = "block";
       document.getElementById("downloadBtn").style.display = "inline-block";
 
-      // otomatis simpan log ke localStorage
-      const entry = { time: nowISO(), name: nama, role: role, keterangan: keterangan, bilik: bilik };
-      addLog(entry);
-
-      // sekaligus buat link download langsung untuk kartu yg sedang dibuat
-      // kita pakai object URL supaya user bisa download hasil preview
       const url = URL.createObjectURL(blob);
       document.getElementById("downloadBtn").onclick = () => {
         const a = document.createElement("a");
         a.href = url;
         a.download = `kartu_${nama.replace(/[^\w\s]/gi,'')}.png`;
         a.click();
-        // revoke setelah download
         setTimeout(()=>URL.revokeObjectURL(url), 1000);
       };
     });
-
-    function downloadImage() {
-      // tidak dipakai karena sudah set di onclick saat generate
-    }
   </script>
 </body>
 </html>
