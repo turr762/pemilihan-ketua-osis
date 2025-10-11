@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Kartu Undangan Pemilihan Ketua OSIS - Guru</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .btn {
+      margin: 10px;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    canvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Kartu Undangan Pemilihan Ketua OSIS (Guru)</h1>
+
+  <button class="btn" id="generateBtn" disabled>Buat Semua Kartu Guru</button>
+  <button class="btn" id="downloadZip" style="display:none;">Unduh Semua (ZIP)</button>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const names = [
+      "Drs. H. Saefudin MM","Dra. Nuri Iswororini","Dra. Siti Muktamaroh Eli R",
+      "Suyanti, S.Pd","Ella Alawiyah, S.Pd","Drs. Nur Aswad","Andriyani, S.Pd",
+      "Eliana Hasibuan, S.P Ak","Poniyem, S.Pd","Jauhari Purwanto, M.M",
+      "Sribudiyanti, S.Pd","Jetro Siahaan, S.Pd","Nasir, SE. S.Pd","Yulianti, S.Pd",
+      "Agus Sugiarto, S.Pd","Drs. Jamali","Siblih, S.Ag","Drs. Syafrudin",
+      "Dewi Kristinawati, S.Pd","Gusti Tamba, S.Pd","Ulfah Nurul Faoziyah, S.Pd M",
+      "Nani Purwaningsih, S.Pd","Mohamad Daud, S.Pd","Titin Gumiati, S.Pd",
+      "Tri Winarni, S.Po","Nur Ichwandika, S.Pd","Eka Maryaningsih, S.Pd",
+      "Anist Karina, S.Pd","Akram, S.Pd","Syapa'atul Auroh, S.Pd","Eko Puji Wicaksono, S.Pd",
+      "Abdul Aziz, S.Pd.I","Muhammad Rizal, S.Pd.I","Ayu Tri Hapasri, S.Pd"
+    ];
+
+    const templateURL = "https://raw.githubusercontent.com/turr762/pemilihan-ketua-osis/refs/heads/main/guiru.jpg";
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const zip = new JSZip();
+    const generateBtn = document.getElementById("generateBtn");
+    const downloadBtn = document.getElementById("downloadZip");
+
+    let templateImage = new Image();
+    templateImage.crossOrigin = "anonymous";
+    templateImage.onload = () => {
+      generateBtn.disabled = false;
+      console.log("Template siap, tombol diaktifkan!");
+    };
+    templateImage.onerror = () => {
+      alert("Gagal memuat template gambar! Coba pastikan link benar atau koneksi stabil.");
+    };
+    templateImage.src = templateURL;
+
+    async function drawCard(name) {
+      const fixedHeight = 1080;
+      const scale = fixedHeight / templateImage.height;
+      const fixedWidth = templateImage.width * scale;
+
+      canvas.width = fixedWidth;
+      canvas.height = fixedHeight;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(templateImage, 0, 0, fixedWidth, fixedHeight);
+
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+
+      ctx.font = "bold 38px Arial";
+      ctx.fillText(name, canvas.width / 2, canvas.height * 0.33);
+
+      ctx.font = "bold 30px Arial";
+      ctx.fillText("Sebagai Guru", canvas.width / 2, canvas.height * 0.37);
+
+      ctx.font = "bold 32px Arial";
+      ctx.fillText("Guru Mapel", canvas.width / 2, canvas.height * 0.40);
+
+      ctx.font = "bold 32px Arial";
+      ctx.fillText("Bilik Bebas", canvas.width / 2, canvas.height * 0.44);
+
+      return new Promise((resolve) => {
+        canvas.toBlob(blob => resolve({ name, blob }));
+      });
+    }
+
+    async function generateAll() {
+      if (!templateImage.complete) {
+        alert("Gambar template belum siap, tunggu sebentar!");
+        return;
+      }
+
+      const folder = zip.folder("Kartu_Guru");
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Sedang Membuat...";
+
+      for (let i = 0; i < names.length; i++) {
+        const result = await drawCard(names[i]);
+        folder.file(`${result.name.replace(/[^\w\s]/gi, '')}.png`, result.blob);
+      }
+
+      generateBtn.textContent = "Selesai!";
+      downloadBtn.style.display = "inline-block";
+    }
+
+    async function downloadZip() {
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "Kartu_Undangan_Guru.zip");
+    }
+
+    generateBtn.addEventListener("click", generateAll);
+    downloadBtn.addEventListener("click", downloadZip);
+  </script>
+</body>
+</html>
