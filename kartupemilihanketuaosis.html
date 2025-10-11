@@ -14,12 +14,12 @@
       margin-top: 20px;
       border: 2px solid #444;
       max-width: 100%;
-      display: none; /* canvas hidden awalnya */
+      display: none;
     }
     input, select, button {
       margin: 10px;
       padding: 10px;
-      font-size: 16px;
+      font-size: 16px; /* ukuran tombol tetap besar */
     }
     .btn {
       background-color: #007bff;
@@ -39,16 +39,34 @@
 
   <input type="text" id="nama" placeholder="Masukkan Nama"><br>
 
-  <select id="kelasUtama" onchange="updateSubkelas()">
-    <option value="">Pilih Kelas</option>
-    <option value="7">Kelas 7</option>
-    <option value="8">Kelas 8</option>
-    <option value="9">Kelas 9</option>
+  <select id="sebagai" onchange="updateRole()">
+    <option value="">Sebagai...</option>
+    <option value="Murid">Murid</option>
+    <option value="Guru">Guru</option>
   </select><br>
 
-  <select id="subkelas">
-    <option value="">Pilih Subkelas</option>
-  </select><br>
+  <div id="muridForm" style="display:none;">
+    <select id="kelasUtama" onchange="updateSubkelas()">
+      <option value="">Pilih Kelas</option>
+      <option value="7">Kelas 7</option>
+      <option value="8">Kelas 8</option>
+      <option value="9">Kelas 9</option>
+    </select><br>
+
+    <select id="subkelas">
+      <option value="">Pilih Subkelas</option>
+    </select><br>
+  </div>
+
+  <div id="guruForm" style="display:none;">
+    <select id="jabatan">
+      <option value="">Pilih Jabatan</option>
+      <option value="Guru Mapel">Guru Mapel</option>
+      <option value="Wali Kelas">Wali Kelas</option>
+      <option value="Kepala Sekolah">Kepala Sekolah</option>
+      <option value="Tendik">Tendik</option>
+    </select><br>
+  </div>
 
   <button class="btn" onclick="generateImage()">Buat Kartu</button>
   <button class="btn" id="downloadBtn" style="display:none" onclick="downloadImage()">Unduh Kartu</button>
@@ -61,12 +79,18 @@
 
     let templateImage = new Image();
     templateImage.crossOrigin = "anonymous";
-    templateImage.src = "https://raw.githubusercontent.com/turr762/pemilihan-ketua-osis/refs/heads/main/gambarundangan.jpg";
+    templateImage.src = "https://raw.githubusercontent.com/turr762/pemilihan-ketua-osis/refs/heads/main/siswa.jpg";
 
     templateImage.onload = function() {
       canvas.width = templateImage.width;
       canvas.height = templateImage.height;
     };
+
+    function updateRole() {
+      const role = document.getElementById("sebagai").value;
+      document.getElementById("muridForm").style.display = role === "Murid" ? "block" : "none";
+      document.getElementById("guruForm").style.display = role === "Guru" ? "block" : "none";
+    }
 
     function updateSubkelas() {
       const kelasUtama = document.getElementById("kelasUtama").value;
@@ -98,38 +122,58 @@
         H: "Bilik 1"
       };
       const huruf = subkelas.slice(-1);
-      return mapping[huruf] || "";
+      return mapping[huruf] || "Bilik Bebas";
     }
 
     function generateImage() {
       const nama = document.getElementById("nama").value.trim();
-      const subkelas = document.getElementById("subkelas").value;
-      if (!nama || !subkelas) {
-        alert("Isi nama dan pilih subkelas terlebih dahulu!");
+      const role = document.getElementById("sebagai").value;
+      let keterangan = "";
+      let bilik = "";
+
+      if (!nama || !role) {
+        alert("Isi nama dan pilih peran terlebih dahulu!");
         return;
       }
 
-      const bilik = getBilik(subkelas);
+      if (role === "Murid") {
+        const subkelas = document.getElementById("subkelas").value;
+        if (!subkelas) {
+          alert("Pilih kelas dan subkelas terlebih dahulu!");
+          return;
+        }
+        keterangan = "Kelas " + subkelas;
+        bilik = getBilik(subkelas);
+      } else if (role === "Guru") {
+        const jabatan = document.getElementById("jabatan").value;
+        if (!jabatan) {
+          alert("Pilih jabatan terlebih dahulu!");
+          return;
+        }
+        keterangan = jabatan;
+        bilik = "Bilik Bebas";
+      }
 
-      // tampilkan canvas
       canvas.style.display = "block";
-
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(templateImage, 0, 0);
 
       ctx.fillStyle = "black";
       ctx.textAlign = "center";
 
-      // Nama tetap
-      ctx.font = "bold 50px Arial";
-      ctx.fillText(nama, canvas.width / 2, canvas.height * 0.40);
+      // Ukuran font dikecilkan dari versi sebelumnya
+      ctx.font = "bold 38px Arial"; // Nama
+      ctx.fillText(nama, canvas.width / 2, canvas.height * 0.33);
 
-      // Kelas & Bilik diturunkan
-      ctx.font = "bold 40px Arial";
-      ctx.fillText("Kelas " + subkelas, canvas.width / 2, canvas.height * 0.73);
-      ctx.fillText(bilik, canvas.width / 2, canvas.height * 0.81);
+      ctx.font = "bold 30px Arial"; // Sebagai
+      ctx.fillText("Sebagai " + role, canvas.width / 2, canvas.height * 0.37);
 
-      // tampilkan tombol unduh
+      ctx.font = "bold 32px Arial"; // Kelas/Jabatan
+      ctx.fillText(keterangan, canvas.width / 2, canvas.height * 0.40);
+
+      ctx.font = "bold 32px Arial"; // Bilik
+      ctx.fillText(bilik, canvas.width / 2, canvas.height * 0.44);
+
       document.getElementById("downloadBtn").style.display = "inline-block";
     }
 
