@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Kartu Undangan Pemilihan Ketua OSIS</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      text-align: center;
+      padding: 20px;
+    }
+    canvas {
+      margin-top: 20px;
+      border: 2px solid #444;
+      max-width: 100%;
+      display: none; /* canvas hidden awalnya */
+    }
+    input, select, button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 5px;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Kartu Undangan Pemilihan Ketua OSIS</h1>
+
+  <input type="text" id="nama" placeholder="Masukkan Nama"><br>
+
+  <select id="kelasUtama" onchange="updateSubkelas()">
+    <option value="">Pilih Kelas</option>
+    <option value="7">Kelas 7</option>
+    <option value="8">Kelas 8</option>
+    <option value="9">Kelas 9</option>
+  </select><br>
+
+  <select id="subkelas">
+    <option value="">Pilih Subkelas</option>
+  </select><br>
+
+  <button class="btn" onclick="generateImage()">Buat Kartu</button>
+  <button class="btn" id="downloadBtn" style="display:none" onclick="downloadImage()">Unduh Kartu</button>
+  <br>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    let templateImage = new Image();
+    templateImage.crossOrigin = "anonymous";
+    templateImage.src = "https://raw.githubusercontent.com/turr762/pemilihan-ketua-osis/refs/heads/main/gambarundangan.jpg";
+
+    templateImage.onload = function() {
+      canvas.width = templateImage.width;
+      canvas.height = templateImage.height;
+    };
+
+    function updateSubkelas() {
+      const kelasUtama = document.getElementById("kelasUtama").value;
+      const subkelas = document.getElementById("subkelas");
+      subkelas.innerHTML = "<option value=''>Pilih Subkelas</option>";
+
+      let options = [];
+      if (kelasUtama === "7") options = ["7A","7B","7C","7D","7E","7F","7G"];
+      if (kelasUtama === "8") options = ["8A","8B","8C","8D","8E","8F","8G","8H"];
+      if (kelasUtama === "9") options = ["9A","9B","9C","9D","9E","9F","9G"];
+
+      options.forEach(opt => {
+        const option = document.createElement("option");
+        option.value = opt;
+        option.text = opt;
+        subkelas.appendChild(option);
+      });
+    }
+
+    function getBilik(subkelas) {
+      const mapping = {
+        A: "Bilik 1",
+        B: "Bilik 2",
+        C: "Bilik 3",
+        D: "Bilik 4",
+        E: "Bilik 5",
+        F: "Bilik 6",
+        G: "Bilik 7",
+        H: "Bilik 1"
+      };
+      const huruf = subkelas.slice(-1);
+      return mapping[huruf] || "";
+    }
+
+    function generateImage() {
+      const nama = document.getElementById("nama").value.trim();
+      const subkelas = document.getElementById("subkelas").value;
+      if (!nama || !subkelas) {
+        alert("Isi nama dan pilih subkelas terlebih dahulu!");
+        return;
+      }
+
+      const bilik = getBilik(subkelas);
+
+      // tampilkan canvas
+      canvas.style.display = "block";
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(templateImage, 0, 0);
+
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+
+      // Nama tetap
+      ctx.font = "bold 50px Arial";
+      ctx.fillText(nama, canvas.width / 2, canvas.height * 0.40);
+
+      // Kelas & Bilik diturunkan
+      ctx.font = "bold 40px Arial";
+      ctx.fillText("Kelas " + subkelas, canvas.width / 2, canvas.height * 0.73);
+      ctx.fillText(bilik, canvas.width / 2, canvas.height * 0.81);
+
+      // tampilkan tombol unduh
+      document.getElementById("downloadBtn").style.display = "inline-block";
+    }
+
+    function downloadImage() {
+      const link = document.createElement("a");
+      link.download = "kartu_undangan.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+  </script>
+</body>
+</html>
