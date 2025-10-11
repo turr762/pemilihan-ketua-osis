@@ -1,28 +1,74 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Tracking Undangan OSIS</title>
+  <meta charset="UTF-8" />
+  <title>Tracker Undangan Pemilihan OSIS</title>
   <style>
-    body { font-family: Arial, sans-serif; background:#f8fafc; padding:20px; }
-    table { border-collapse: collapse; width: 100%; background:white; box-shadow:0 0 10px #ccc; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background-color: #007bff; color: white; }
-    button { margin-top:10px; padding:8px 12px; background:red; color:white; border:none; border-radius:5px; cursor:pointer; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 20px;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 90%;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    input[type="password"] {
+      padding: 8px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <h2>📊 Daftar Kartu Undangan yang Sudah Dibuat</h2>
-  <table>
-    <thead><tr><th>Nama</th><th>Sebagai</th><th>Keterangan</th><th>Bilik</th><th>Waktu</th></tr></thead>
-    <tbody id="dataTable"></tbody>
-  </table>
-  <input type="password" id="pass" placeholder="Masukkan sandi untuk hapus data">
-  <button onclick="hapusData()">Hapus Semua Data</button>
+  <h1>📊 Tracker Undangan Pemilihan OSIS</h1>
+  <button id="downloadCsv">Unduh CSV</button><br><br>
 
+  <input type="password" id="password" placeholder="Masukkan sandi untuk hapus semua">
+  <button id="hapusSemua">Hapus Semua</button>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Sebagai</th>
+        <th>Kelas / Jabatan</th>
+        <th>Bilik</th>
+        <th>Waktu</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr><td colspan="5">Menunggu data...</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
@@ -37,30 +83,67 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const table = document.getElementById("dataTable");
 
-    onValue(ref(db, "undangan"), (snapshot) => {
-      table.innerHTML = "";
-      snapshot.forEach(child => {
-        const data = child.val();
+    const tableBody = document.getElementById("tableBody");
+    const trackerRef = ref(db, "tracker");
+
+    // Realtime listener
+    onValue(trackerRef, (snapshot) => {
+      const data = snapshot.val();
+      tableBody.innerHTML = "";
+
+      if (!data) {
+        tableBody.innerHTML = "<tr><td colspan='5'>Belum ada data</td></tr>";
+        return;
+      }
+
+      Object.values(data).forEach(item => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${data.name}</td>
-          <td>${data.role}</td>
-          <td>${data.keterangan}</td>
-          <td>${data.bilik}</td>
-          <td>${new Date(data.time).toLocaleString()}</td>
+          <td>${item.nama}</td>
+          <td>${item.sebagai}</td>
+          <td>${item.keterangan}</td>
+          <td>${item.bilik}</td>
+          <td>${item.waktu}</td>
         `;
-        table.appendChild(tr);
+        tableBody.appendChild(tr);
       });
     });
 
-    window.hapusData = () => {
-      const pass = document.getElementById("pass").value;
-      if (pass !== "Syafitriimut") return alert("Sandi salah!");
-      if (!confirm("Yakin ingin menghapus semua data?")) return;
-      remove(ref(db, "undangan"));
-    };
+    // Tombol hapus semua data dengan sandi
+    document.getElementById("hapusSemua").addEventListener("click", async () => {
+      const pass = document.getElementById("password").value.trim();
+      if (pass === "Syafitriimut") {
+        if (confirm("Yakin ingin menghapus semua data?")) {
+          await remove(trackerRef);
+          alert("Semua data berhasil dihapus!");
+        }
+      } else {
+        alert("Sandi salah!");
+      }
+    });
+
+    // Tombol unduh CSV
+    document.getElementById("downloadCsv").addEventListener("click", async () => {
+      const snapshot = await new Promise(resolve => onValue(trackerRef, resolve, { onlyOnce: true }));
+      const data = snapshot.val();
+
+      if (!data) {
+        alert("Belum ada data untuk diunduh.");
+        return;
+      }
+
+      let csvContent = "Nama,Sebagai,Kelas/Jabatan,Bilik,Waktu\n";
+      Object.values(data).forEach(item => {
+        csvContent += `"${item.nama}","${item.sebagai}","${item.keterangan}","${item.bilik}","${item.waktu}"\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "tracker.csv";
+      link.click();
+    });
   </script>
 </body>
 </html>
