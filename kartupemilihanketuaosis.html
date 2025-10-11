@@ -29,7 +29,6 @@
       <option value="8">Kelas 8</option>
       <option value="9">Kelas 9</option>
     </select><br>
-
     <select id="subkelas">
       <option value="">Pilih Subkelas</option>
     </select><br>
@@ -47,51 +46,37 @@
 
   <button class="btn" id="buatBtn">Buat Kartu</button>
   <button class="btn" id="downloadBtn" style="display:none">Unduh Kartu</button>
-  <br>
   <canvas id="canvas"></canvas>
 
-  <script>
-    // --- localStorage key untuk menyimpan logs ---
-    const LOG_KEY = "kartu_logs_v1";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-    function loadLogs() {
-      return JSON.parse(localStorage.getItem(LOG_KEY) || "[]");
-    }
+    const firebaseConfig = {
+      apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
+      authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
+      databaseURL: "https://pemilihan-ketos-ecad9-default-rtdb.firebaseio.com",
+      projectId: "pemilihan-ketos-ecad9",
+      storageBucket: "pemilihan-ketos-ecad9.firebasestorage.app",
+      messagingSenderId: "347053662789",
+      appId: "1:347053662789:web:cccd638e31fb3a2491792c",
+      measurementId: "G-8G46RV8ZW0"
+    };
 
-    function saveLogs(logs) {
-      localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-    }
-
-    // tambah log baru hanya jika belum ada nama yang sama persis
-    function addLog(entry) {
-      const logs = loadLogs();
-      const duplikat = logs.find(l => l.name.toLowerCase().trim() === entry.name.toLowerCase().trim());
-      if (duplikat) {
-        alert(`Nama "${entry.name}" sudah pernah dibuat kartunya!`);
-        return false; // jangan lanjut
-      }
-      logs.push(entry);
-      saveLogs(logs);
-      window.dispatchEvent(new CustomEvent('kartu_logs_updated', { detail: entry }));
-      return true;
-    }
-
-    function nowISO() {
-      return new Date().toISOString();
-    }
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
     const buatBtn = document.getElementById("buatBtn");
     const downloadBtn = document.getElementById("downloadBtn");
 
-    let templateImage = new Image();
+    const templateImage = new Image();
     templateImage.crossOrigin = "anonymous";
     templateImage.src = "https://raw.githubusercontent.com/turr762/pemilihan-ketua-osis/refs/heads/main/siswa.jpg";
     templateImage.onload = () => {
       canvas.width = templateImage.width;
       canvas.height = templateImage.height;
-      ctx.drawImage(templateImage, 0, 0);
     };
 
     function updateRole() {
@@ -108,79 +93,68 @@
       if (kelasUtama === "7") options = ["7A","7B","7C","7D","7E","7F","7G"];
       if (kelasUtama === "8") options = ["8A","8B","8C","8D","8E","8F","8G","8H"];
       if (kelasUtama === "9") options = ["9A","9B","9C","9D","9E","9F","9G"];
-      options.forEach(opt => { const o = document.createElement("option"); o.value = opt; o.text = opt; subkelas.appendChild(o); });
+      options.forEach(opt => {
+        const option = document.createElement("option");
+        option.value = opt;
+        option.text = opt;
+        subkelas.appendChild(option);
+      });
     }
 
     function getBilik(subkelas) {
-      const mapping = { A:"Bilik 1",B:"Bilik 2",C:"Bilik 3",D:"Bilik 4",E:"Bilik 5",F:"Bilik 6",G:"Bilik 7",H:"Bilik 1" };
-      const huruf = subkelas.slice(-1);
-      return mapping[huruf] || "Bilik Bebas";
+      const map = {A:"Bilik 1",B:"Bilik 2",C:"Bilik 3",D:"Bilik 4",E:"Bilik 5",F:"Bilik 6",G:"Bilik 7",H:"Bilik 1"};
+      return map[subkelas.slice(-1)] || "Bilik Bebas";
     }
 
-    async function drawCardToBlob({ nameText, roleText, keteranganText, bilikText }) {
-      return new Promise((resolve) => {
-        const fixedHeight = 1080;
-        const scale = fixedHeight / templateImage.height;
-        const fixedWidth = Math.round(templateImage.width * scale);
-        canvas.width = fixedWidth;
-        canvas.height = fixedHeight;
-
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        ctx.drawImage(templateImage, 0, 0, fixedWidth, fixedHeight);
-
-        ctx.fillStyle = "black";
-        ctx.textAlign = "center";
-
-        ctx.font = "bold 38px Arial";
-        ctx.fillText(nameText, canvas.width / 2, canvas.height * 0.33);
-
-        ctx.font = "bold 30px Arial";
-        ctx.fillText("Sebagai " + roleText, canvas.width / 2, canvas.height * 0.37);
-
-        ctx.font = "bold 32px Arial";
-        ctx.fillText(keteranganText, canvas.width / 2, canvas.height * 0.40);
-
-        ctx.font = "bold 32px Arial";
-        ctx.fillText(bilikText, canvas.width / 2, canvas.height * 0.44);
-
-        canvas.toBlob(blob => resolve(blob), "image/png", 1.0);
-      });
+    async function addToDatabase(entry) {
+      const dbRef = ref(db, "undangan/" + entry.name.replace(/[.#$\[\]]/g, "_"));
+      const snapshot = await get(child(ref(db), "undangan/" + entry.name.replace(/[.#$\[\]]/g, "_")));
+      if (snapshot.exists()) {
+        alert("Nama sudah pernah dibuat kartunya!");
+        return false;
+      }
+      await set(dbRef, entry);
+      return true;
     }
 
     buatBtn.addEventListener("click", async () => {
       const nama = document.getElementById("nama").value.trim();
       const role = document.getElementById("sebagai").value;
-      if (!nama || !role) { alert("Isi nama dan pilih peran dulu!"); return; }
+      if (!nama || !role) return alert("Isi nama dan pilih peran terlebih dahulu!");
 
       let keterangan = "", bilik = "";
       if (role === "Murid") {
         const subkelas = document.getElementById("subkelas").value;
-        if (!subkelas) { alert("Pilih subkelas dulu!"); return; }
+        if (!subkelas) return alert("Pilih kelas dan subkelas terlebih dahulu!");
         keterangan = "Kelas " + subkelas;
         bilik = getBilik(subkelas);
       } else {
         const jabatan = document.getElementById("jabatan").value;
-        if (!jabatan) { alert("Pilih jabatan dulu!"); return; }
+        if (!jabatan) return alert("Pilih jabatan terlebih dahulu!");
         keterangan = jabatan;
         bilik = "Bilik Bebas";
       }
 
-      // cek duplikat sebelum generate
-      const entry = { time: nowISO(), name: nama, role: role, keterangan: keterangan, bilik: bilik };
-      const ok = addLog(entry);
-      if (!ok) return; // stop kalau nama duplikat
+      const entry = { time: new Date().toISOString(), name: nama, role, keterangan, bilik };
+      const success = await addToDatabase(entry);
+      if (!success) return;
 
-      const blob = await drawCardToBlob({ nameText:nama, roleText:role, keteranganText:keterangan, bilikText:bilik });
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(templateImage, 0, 0);
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      ctx.font = "bold 38px Arial"; ctx.fillText(nama, canvas.width / 2, canvas.height * 0.33);
+      ctx.font = "bold 30px Arial"; ctx.fillText("Sebagai " + role, canvas.width / 2, canvas.height * 0.37);
+      ctx.font = "bold 32px Arial"; ctx.fillText(keterangan, canvas.width / 2, canvas.height * 0.40);
+      ctx.font = "bold 32px Arial"; ctx.fillText(bilik, canvas.width / 2, canvas.height * 0.44);
+
       canvas.style.display = "block";
-      document.getElementById("downloadBtn").style.display = "inline-block";
-
-      const url = URL.createObjectURL(blob);
-      document.getElementById("downloadBtn").onclick = () => {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `kartu_${nama.replace(/[^\w\s]/gi,'')}.png`;
-        a.click();
-        setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      downloadBtn.style.display = "inline-block";
+      downloadBtn.onclick = () => {
+        const link = document.createElement("a");
+        link.download = "kartu_" + nama + ".png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
       };
     });
   </script>
