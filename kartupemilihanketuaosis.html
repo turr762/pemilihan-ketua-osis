@@ -1,162 +1,139 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <title>Kartu Undangan Pemilihan Ketua OSIS</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f3f4f6; text-align: center; padding: 20px; }
-    canvas { margin-top: 20px; border: 2px solid #444; max-width: 100%; display: none; }
-    input, select, button { margin: 10px; padding: 10px; font-size: 16px; }
-    .btn { background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; margin: 5px; }
-    .btn:hover { background-color: #0056b3; }
-  </style>
-</head>
-<body>
-  <h1>Kartu Undangan Pemilihan Ketua OSIS</h1>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+  import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
 
-  <input type="text" id="nama" placeholder="Masukkan Nama"><br>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
+    authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
+    databaseURL: "https://pemilihan-ketos-ecad9-default-rtdb.firebaseio.com",
+    projectId: "pemilihan-ketos-ecad9",
+    storageBucket: "pemilihan-ketos-ecad9.firebasestorage.app",
+    messagingSenderId: "347053662789",
+    appId: "1:347053662789:web:cccd638e31fb3a2491792c",
+    measurementId: "G-8G46RV8ZW0"
+  };
 
-  <select id="sebagai" onchange="updateRole()">
-    <option value="">Sebagai...</option>
-    <option value="Murid">Murid</option>
-    <option value="Guru">Guru</option>
-  </select><br>
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-  <div id="muridForm" style="display:none;">
-    <select id="kelasUtama" onchange="updateSubkelas()">
-      <option value="">Pilih Kelas</option>
-      <option value="7">Kelas 7</option>
-      <option value="8">Kelas 8</option>
-      <option value="9">Kelas 9</option>
-    </select><br>
-    <select id="subkelas">
-      <option value="">Pilih Subkelas</option>
-    </select><br>
-  </div>
+  // Elemen-elemen utama
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const roleSelect = document.getElementById("sebagai");
+  const muridForm = document.getElementById("muridForm");
+  const guruForm = document.getElementById("guruForm");
+  const subkelasSelect = document.getElementById("subkelas");
+  const kelasUtama = document.getElementById("kelasUtama");
+  const jabatanSelect = document.getElementById("jabatan");
 
-  <div id="guruForm" style="display:none;">
-    <select id="jabatan">
-      <option value="">Pilih Jabatan</option>
-      <option value="Guru Mapel">Guru Mapel</option>
-      <option value="Wali Kelas">Wali Kelas</option>
-      <option value="Kepala Sekolah">Kepala Sekolah</option>
-      <option value="Tendik">Tendik</option>
-    </select><br>
-  </div>
+  let templateImage = new Image();
+  templateImage.crossOrigin = "anonymous";
+  templateImage.src = "https://raw.githubusercontent.com/turr762/pemilihan-ketua-osis/refs/heads/main/siswa.jpg";
+  templateImage.onload = () => {
+    canvas.width = templateImage.width;
+    canvas.height = templateImage.height;
+  };
 
-  <button class="btn" id="buatBtn">Buat Kartu</button>
-  <button class="btn" id="downloadBtn" style="display:none">Unduh Kartu</button>
-  <canvas id="canvas"></canvas>
+  // 🔹 Munculkan form sesuai pilihan
+  roleSelect.addEventListener("change", () => {
+    const role = roleSelect.value;
+    muridForm.style.display = role === "Murid" ? "block" : "none";
+    guruForm.style.display = role === "Guru" ? "block" : "none";
+  });
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
-      authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
-      databaseURL: "https://pemilihan-ketos-ecad9-default-rtdb.firebaseio.com",
-      projectId: "pemilihan-ketos-ecad9",
-      storageBucket: "pemilihan-ketos-ecad9.firebasestorage.app",
-      messagingSenderId: "347053662789",
-      appId: "1:347053662789:web:cccd638e31fb3a2491792c",
-      measurementId: "G-8G46RV8ZW0"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const buatBtn = document.getElementById("buatBtn");
-    const downloadBtn = document.getElementById("downloadBtn");
-
-    const templateImage = new Image();
-    templateImage.crossOrigin = "anonymous";
-    templateImage.src = "https://raw.githubusercontent.com/turr762/pemilihan-ketua-osis/refs/heads/main/siswa.jpg";
-    templateImage.onload = () => {
-      canvas.width = templateImage.width;
-      canvas.height = templateImage.height;
-    };
-
-    function updateRole() {
-      const role = document.getElementById("sebagai").value;
-      document.getElementById("muridForm").style.display = role === "Murid" ? "block" : "none";
-      document.getElementById("guruForm").style.display = role === "Guru" ? "block" : "none";
-    }
-
-    function updateSubkelas() {
-      const kelasUtama = document.getElementById("kelasUtama").value;
-      const subkelas = document.getElementById("subkelas");
-      subkelas.innerHTML = "<option value=''>Pilih Subkelas</option>";
-      let options = [];
-      if (kelasUtama === "7") options = ["7A","7B","7C","7D","7E","7F","7G"];
-      if (kelasUtama === "8") options = ["8A","8B","8C","8D","8E","8F","8G","8H"];
-      if (kelasUtama === "9") options = ["9A","9B","9C","9D","9E","9F","9G"];
-      options.forEach(opt => {
-        const option = document.createElement("option");
-        option.value = opt;
-        option.text = opt;
-        subkelas.appendChild(option);
-      });
-    }
-
-    function getBilik(subkelas) {
-      const map = {A:"Bilik 1",B:"Bilik 2",C:"Bilik 3",D:"Bilik 4",E:"Bilik 5",F:"Bilik 6",G:"Bilik 7",H:"Bilik 1"};
-      return map[subkelas.slice(-1)] || "Bilik Bebas";
-    }
-
-    async function addToDatabase(entry) {
-      const dbRef = ref(db, "undangan/" + entry.name.replace(/[.#$\[\]]/g, "_"));
-      const snapshot = await get(child(ref(db), "undangan/" + entry.name.replace(/[.#$\[\]]/g, "_")));
-      if (snapshot.exists()) {
-        alert("Nama sudah pernah dibuat kartunya!");
-        return false;
-      }
-      await set(dbRef, entry);
-      return true;
-    }
-
-    buatBtn.addEventListener("click", async () => {
-      const nama = document.getElementById("nama").value.trim();
-      const role = document.getElementById("sebagai").value;
-      if (!nama || !role) return alert("Isi nama dan pilih peran terlebih dahulu!");
-
-      let keterangan = "", bilik = "";
-      if (role === "Murid") {
-        const subkelas = document.getElementById("subkelas").value;
-        if (!subkelas) return alert("Pilih kelas dan subkelas terlebih dahulu!");
-        keterangan = "Kelas " + subkelas;
-        bilik = getBilik(subkelas);
-      } else {
-        const jabatan = document.getElementById("jabatan").value;
-        if (!jabatan) return alert("Pilih jabatan terlebih dahulu!");
-        keterangan = jabatan;
-        bilik = "Bilik Bebas";
-      }
-
-      const entry = { time: new Date().toISOString(), name: nama, role, keterangan, bilik };
-      const success = await addToDatabase(entry);
-      if (!success) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(templateImage, 0, 0);
-      ctx.fillStyle = "black";
-      ctx.textAlign = "center";
-      ctx.font = "bold 38px Arial"; ctx.fillText(nama, canvas.width / 2, canvas.height * 0.33);
-      ctx.font = "bold 30px Arial"; ctx.fillText("Sebagai " + role, canvas.width / 2, canvas.height * 0.37);
-      ctx.font = "bold 32px Arial"; ctx.fillText(keterangan, canvas.width / 2, canvas.height * 0.40);
-      ctx.font = "bold 32px Arial"; ctx.fillText(bilik, canvas.width / 2, canvas.height * 0.44);
-
-      canvas.style.display = "block";
-      downloadBtn.style.display = "inline-block";
-      downloadBtn.onclick = () => {
-        const link = document.createElement("a");
-        link.download = "kartu_" + nama + ".png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      };
+  // 🔹 Update subkelas otomatis
+  kelasUtama.addEventListener("change", () => {
+    const kelasValue = kelasUtama.value;
+    subkelasSelect.innerHTML = "<option value=''>Pilih Subkelas</option>";
+    let options = [];
+    if (kelasValue === "7") options = ["7A","7B","7C","7D","7E","7F","7G"];
+    if (kelasValue === "8") options = ["8A","8B","8C","8D","8E","8F","8G","8H"];
+    if (kelasValue === "9") options = ["9A","9B","9C","9D","9E","9F","9G"];
+    options.forEach(opt => {
+      const o = document.createElement("option");
+      o.value = opt;
+      o.text = opt;
+      subkelasSelect.appendChild(o);
     });
-  </script>
-</body>
-</html>
+  });
+
+  // 🔹 Mapping bilik
+  function getBilik(subkelas) {
+    const mapping = {
+      A: "Bilik 1",
+      B: "Bilik 2",
+      C: "Bilik 3",
+      D: "Bilik 4",
+      E: "Bilik 5",
+      F: "Bilik 6",
+      G: "Bilik 7",
+      H: "Bilik 1"
+    };
+    return mapping[subkelas.slice(-1)] || "Bilik Bebas";
+  }
+
+  // 🔹 Buat kartu + kirim ke Firebase tracker
+  window.generateImage = async function () {
+    const nama = document.getElementById("nama").value.trim();
+    const role = roleSelect.value;
+
+    if (!nama || !role) return alert("Isi nama dan pilih peran dulu!");
+
+    let keterangan = "";
+    let bilik = "";
+
+    if (role === "Murid") {
+      const subkelas = subkelasSelect.value;
+      if (!subkelas) return alert("Pilih kelas & subkelas!");
+      keterangan = "Kelas " + subkelas;
+      bilik = getBilik(subkelas);
+    } else {
+      const jabatan = jabatanSelect.value;
+      if (!jabatan) return alert("Pilih jabatan!");
+      keterangan = jabatan;
+      bilik = "Bilik Bebas";
+    }
+
+    // Gambar ke canvas
+    canvas.style.display = "block";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(templateImage, 0, 0);
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+
+    ctx.font = "bold 38px Arial";
+    ctx.fillText(nama, canvas.width / 2, canvas.height * 0.33);
+    ctx.font = "bold 30px Arial";
+    ctx.fillText("Sebagai " + role, canvas.width / 2, canvas.height * 0.37);
+    ctx.font = "bold 32px Arial";
+    ctx.fillText(keterangan, canvas.width / 2, canvas.height * 0.40);
+    ctx.font = "bold 32px Arial";
+    ctx.fillText(bilik, canvas.width / 2, canvas.height * 0.44);
+
+    document.getElementById("downloadBtn").style.display = "inline-block";
+
+    // Cek duplikat di tracker
+    const trackerRef = ref(db, "tracker");
+    const snapshot = await get(trackerRef);
+    const data = snapshot.val() || {};
+    const existing = Object.values(data).find(e => e.nama === nama);
+    if (existing) {
+      alert("Nama ini sudah terdaftar di tracker!");
+      return;
+    }
+
+    // Simpan ke Firebase tracker
+    const waktu = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
+    await set(ref(db, "tracker/" + Date.now()), {
+      nama, sebagai: role, keterangan, bilik, waktu
+    });
+  };
+
+  // 🔹 Download kartu
+  window.downloadImage = function () {
+    const link = document.createElement("a");
+    link.download = "kartu_undangan.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  };
+</script>
