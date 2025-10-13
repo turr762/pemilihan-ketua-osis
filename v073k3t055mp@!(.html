@@ -20,7 +20,6 @@
       z-index: 1;
     }
 
-    /* Overlay agar teks tetap terlihat jelas */
     body::before {
       content: "";
       position: fixed;
@@ -109,16 +108,22 @@
   <!-- kandidat -->
   <div class="box" id="voteBox" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <div class="muted">Pilih 1 kandidat — foto bisa di-upload/hapus</div>
+      <div class="muted">Pilih 1 kandidat — foto bisa di-upload/hapus (jika kunci terbuka)</div>
       <div class="row">
         <input id="resetCode" type="password" placeholder="Kode reset (admin)" />
         <button id="resetBtn" class="secondary">Reset Semua Data</button>
       </div>
     </div>
+
+    <!-- Tambahan: Kunci Gambar -->
+    <div class="row" style="margin-top:10px">
+      <input id="unlockCode" type="password" placeholder="Kode kunci gambar" />
+      <button id="unlockBtn" class="secondary">Buka Kunci Gambar</button>
+    </div>
+
     <div class="candidate-container" id="candidateContainer"></div>
   </div>
 
-<!-- Firebase script (tidak diubah) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
   import { getDatabase, ref, set, push, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
@@ -144,6 +149,7 @@
 
   let currentUser = null;
   let photos = [];
+  let imageUnlocked = false; // <-- tambahan variabel kunci
 
   const photosRef = ref(db, "photos");
   onValue(photosRef, snap => {
@@ -184,11 +190,13 @@
       fileInput.type = "file";
       fileInput.accept = "image/*";
       fileInput.className = "fileInput";
+      fileInput.disabled = !imageUnlocked; // kunci upload
       fileInput.addEventListener("change", (ev) => handleUpload(ev, i));
 
       const delBtn = document.createElement("button");
       delBtn.textContent = "Hapus Foto";
       delBtn.className = "small";
+      delBtn.disabled = !imageUnlocked; // kunci hapus
       delBtn.addEventListener("click", () => handleDeletePhoto(i));
 
       const pilihBtn = document.createElement("button");
@@ -300,6 +308,18 @@
     await remove(ref(db, "voters"));
     alert("Semua data telah dihapus.");
     location.reload();
+  });
+
+  // 🔒 FITUR TAMBAHAN — Kunci Gambar
+  document.getElementById("unlockBtn").addEventListener('click', () => {
+    const code = document.getElementById("unlockCode").value.trim();
+    if (code === "1937460501020304050607080910") {
+      imageUnlocked = true;
+      alert("Kunci gambar berhasil dibuka.");
+      renderCandidates();
+    } else {
+      alert("Kode kunci salah!");
+    }
   });
 
   (async function ensureInitialized(){
