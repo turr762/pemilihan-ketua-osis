@@ -115,10 +115,11 @@
       </div>
     </div>
 
-    <!-- Tambahan: Kunci Gambar -->
+    <!-- 🔒 Kunci Gambar -->
     <div class="row" style="margin-top:10px">
       <input id="unlockCode" type="password" placeholder="Kode kunci gambar" />
       <button id="unlockBtn" class="secondary">Buka Kunci Gambar</button>
+      <button id="lockBtn" class="secondary" style="display:none;">Kunci Kembali</button>
     </div>
 
     <div class="candidate-container" id="candidateContainer"></div>
@@ -149,7 +150,7 @@
 
   let currentUser = null;
   let photos = [];
-  let imageUnlocked = false; // <-- tambahan variabel kunci
+  let imageUnlocked = false; // 🔒 status kunci
 
   const photosRef = ref(db, "photos");
   onValue(photosRef, snap => {
@@ -190,13 +191,13 @@
       fileInput.type = "file";
       fileInput.accept = "image/*";
       fileInput.className = "fileInput";
-      fileInput.disabled = !imageUnlocked; // kunci upload
+      fileInput.disabled = !imageUnlocked;
       fileInput.addEventListener("change", (ev) => handleUpload(ev, i));
 
       const delBtn = document.createElement("button");
       delBtn.textContent = "Hapus Foto";
       delBtn.className = "small";
-      delBtn.disabled = !imageUnlocked; // kunci hapus
+      delBtn.disabled = !imageUnlocked;
       delBtn.addEventListener("click", () => handleDeletePhoto(i));
 
       const pilihBtn = document.createElement("button");
@@ -310,16 +311,29 @@
     location.reload();
   });
 
-  // 🔒 FITUR TAMBAHAN — Kunci Gambar
-  document.getElementById("unlockBtn").addEventListener('click', () => {
+  // 🔒 FITUR KUNCI / BUKA KUNCI GAMBAR
+  const unlockBtn = document.getElementById("unlockBtn");
+  const lockBtn = document.getElementById("lockBtn");
+
+  unlockBtn.addEventListener('click', () => {
     const code = document.getElementById("unlockCode").value.trim();
     if (code === "1937460501020304050607080910") {
       imageUnlocked = true;
       alert("Kunci gambar berhasil dibuka.");
+      unlockBtn.style.display = "none";
+      lockBtn.style.display = "inline-block";
       renderCandidates();
     } else {
       alert("Kode kunci salah!");
     }
+  });
+
+  lockBtn.addEventListener('click', () => {
+    imageUnlocked = false;
+    alert("Kunci gambar telah dikunci kembali.");
+    unlockBtn.style.display = "inline-block";
+    lockBtn.style.display = "none";
+    renderCandidates();
   });
 
   (async function ensureInitialized(){
