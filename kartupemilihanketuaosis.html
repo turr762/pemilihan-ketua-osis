@@ -70,7 +70,7 @@
   <button class="btn" id="downloadBtn" style="display:none" onclick="downloadImage()">Unduh Kartu</button>
   <canvas id="canvas"></canvas>
 
-  <!-- Firebase SDK (non-module, agar bisa jalan offline dan lokal) -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-database-compat.js"></script>
 
@@ -123,11 +123,29 @@
       });
     }
 
+    // === FUNGSI YANG DIUBAH (8H GACHA) ===
     function getBilik(subkelas) {
-      const map = {A:"Bilik 1",B:"Bilik 2",C:"Bilik 3",D:"Bilik 4",E:"Bilik 5",F:"Bilik 6",G:"Bilik 7",H:"Bilik 1"};
+      const map = {
+        A: "Bilik 1",
+        B: "Bilik 2",
+        C: "Bilik 3",
+        D: "Bilik 4",
+        E: "Bilik 5",
+        F: "Bilik 6",
+        G: "Bilik 7",
+        H: "Bilik 1"
+      };
+
+      // Kalau kelasnya 8H → random bilik 1–7
+      if (subkelas === "8H") {
+        const randomNum = Math.floor(Math.random() * 7) + 1;
+        return `Bilik ${randomNum}`;
+      }
+
       return map[subkelas.slice(-1)] || "Bilik Bebas";
     }
 
+    // === Generate Gambar & Simpan Data ===
     async function generateImage() {
       const nama = document.getElementById("nama").value.trim();
       const role = document.getElementById("sebagai").value;
