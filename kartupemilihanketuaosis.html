@@ -164,13 +164,16 @@
         bilik = "Bilik Bebas";
       }
 
-      // Cek duplikat di Firebase
+      // === CEK NAMA SUDAH ADA (REALTIME DAN GLOBAL) ===
       const snapshot = await db.ref("tracker").once("value");
       const data = snapshot.val() || {};
-      const exists = Object.values(data).some(e => e.nama === nama);
-      if (exists) return alert("Nama sudah terdaftar!");
+      const exists = Object.values(data).some(e => e.nama.toLowerCase() === nama.toLowerCase());
+      if (exists) {
+        alert("Nama sudah terdaftar di sistem! Silakan gunakan nama lain.");
+        return;
+      }
 
-      // Simpan data baru
+      // Simpan data baru ke Firebase
       const waktu = new Date().toLocaleString("id-ID", {timeZone:"Asia/Jakarta"});
       await db.ref("tracker/" + Date.now()).set({ nama, sebagai: role, keterangan, bilik, waktu });
 
