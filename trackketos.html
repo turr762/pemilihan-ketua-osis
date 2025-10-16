@@ -16,13 +16,7 @@
       align-items: center;
       padding: 20px;
     }
-    h1 {
-      margin-bottom: 10px;
-    }
-    h2 {
-      margin-top: 0;
-      font-weight: normal;
-    }
+    h1 { margin-bottom: 30px; }
     table {
       width: 90%;
       max-width: 500px;
@@ -32,7 +26,6 @@
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-      margin-top: 20px;
     }
     th, td {
       padding: 12px 16px;
@@ -44,21 +37,10 @@
       font-weight: bold;
     }
     tr:last-child td { border-bottom: none; }
-    canvas {
-      margin-top: 30px;
-      background: white;
-      border-radius: 12px;
-      padding: 10px;
-      max-width: 600px;
-      width: 90%;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-    }
   </style>
 </head>
 <body>
   <h1>Hasil Pemilihan Ketua OSIS SMPN 219 Jakarta</h1>
-  <h2 id="totalVotes">Memuat jumlah suara...</h2>
-
   <table>
     <thead>
       <tr>
@@ -70,15 +52,11 @@
     <tbody id="resultTable"></tbody>
   </table>
 
-  <canvas id="voteChart"></canvas>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
     import { getDatabase, ref, onValue } 
       from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
-    import Chart from "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js";
 
-    // Konfigurasi Firebase (sama kayak web utamanya)
     const firebaseConfig = {
       apiKey: "AIzaSyCTwIn2Ckl-tu6QTgW2X2kKz0ruy-bvErY",
       authDomain: "pemilihan-ketos-ecad9.firebaseapp.com",
@@ -93,44 +71,24 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let chart;
-
     function renderResults(data) {
       const tbody = document.getElementById("resultTable");
-      const totalEl = document.getElementById("totalVotes");
       tbody.innerHTML = "";
-
-      if (!data || Object.keys(data).length === 0) {
-        totalEl.textContent = "Belum ada data suara yang masuk.";
-        if (chart) chart.destroy();
-        return;
-      }
 
       const uniqueVotes = {};
       const countedNames = new Set();
 
-      // Loop data Firebase
+      // Pastikan satu nama cuma dihitung sekali
       Object.values(data).forEach(v => {
-        const nama = (v.nama || "").trim();
-        const kandidat = (v.kandidat || "").trim();
-
-        if (nama && kandidat && !countedNames.has(nama)) {
-          countedNames.add(nama);
+        if (!countedNames.has(v.nama)) {
+          countedNames.add(v.nama);
+          const kandidat = v.kandidat;
           if (!uniqueVotes[kandidat]) uniqueVotes[kandidat] = 0;
           uniqueVotes[kandidat]++;
         }
       });
 
-      const totalUnique = countedNames.size;
-      if (totalUnique === 0) {
-        totalEl.textContent = "Belum ada suara yang sah.";
-        if (chart) chart.destroy();
-        return;
-      }
-
-      totalEl.textContent = `Jumlah suara sah yang masuk: ${totalUnique}`;
-
-      // Urutkan dari terbanyak
+      // Urutkan dari yang paling banyak
       const sorted = Object.entries(uniqueVotes).sort((a, b) => b[1] - a[1]);
 
       sorted.forEach(([kandidat, count], i) => {
@@ -141,37 +99,6 @@
           <td>${count}</td>
         `;
         tbody.appendChild(row);
-      });
-
-      // Chart.js
-      const labels = sorted.map(([k]) => k);
-      const values = sorted.map(([, v]) => v);
-
-      if (chart) chart.destroy();
-      const ctx = document.getElementById("voteChart").getContext("2d");
-      chart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: labels,
-          datasets: [{
-            label: "Jumlah Suara",
-            data: values,
-            backgroundColor: "#00bfff",
-            borderRadius: 8
-          }]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1 } }
-          },
-          plugins: {
-            legend: { display: false },
-            title: {
-              display: true,
-              text: "Diagram Batang Perolehan Suara"
-            }
-          }
-        }
       });
     }
 
