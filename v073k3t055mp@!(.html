@@ -219,26 +219,30 @@
     });
   }
 
-  function showFullscreenImage(src, title) {
-    const overlay = document.createElement('div');
-    overlay.style.position = 'fixed';
-    overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0,0,0,0.9)';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '9999';
-    overlay.addEventListener('click', () => document.body.removeChild(overlay));
+  async function vote(index) {
+    if (!currentUser) { alert("Isi nama & pilih kelas dulu."); return; }
 
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.maxWidth = '95%';
-    img.style.maxHeight = '95%';
-    img.style.borderRadius = '8px';
-    img.alt = title;
+    // simpan suara
+    const vref = push(ref(db, "votes"));
+    await set(vref, {
+      nama: currentUser.nama,
+      kelas: currentUser.kelas,
+      subkelas: currentUser.subkelas,
+      kandidat: KANDIDAT[index],
+      waktu: Date.now()
+    });
 
-    overlay.appendChild(img);
-    document.body.appendChild(overlay);
+    // simpan nama pemilih agar tidak bisa digunakan lagi
+    const pv = push(ref(db, "voters"));
+    await set(pv, {
+      nama: currentUser.nama,
+      kelas: currentUser.kelas,
+      subkelas: currentUser.subkelas,
+      waktu: Date.now()
+    });
+
+    alert("Terima kasih — suara sudah tercatat.");
+    location.reload();
   }
 
   async function handleUpload(ev, index) {
@@ -258,24 +262,7 @@
     await remove(ref(db, `photos/${index}`));
   }
 
-  async function vote(index) {
-    if (!currentUser) { alert("Isi nama & pilih kelas dulu."); return; }
-    const vref = push(ref(db, "votes"));
-    await set(vref, {
-      nama: currentUser.nama,
-      kelas: currentUser.kelas,
-      subkelas: currentUser.subkelas,
-      kandidat: KANDIDAT[index],
-      waktu: Date.now()
-    });
-    const pv = push(ref(db, "voters"));
-    await set(pv, { nama: currentUser.nama, kelas: currentUser.kelas, subkelas: currentUser.subkelas, waktu: Date.now() });
-    alert("Terima kasih — suara sudah tercatat.");
-    location.reload();
-  }
-
   const subkelas = ["A","B","C","D","E","F","G","H"];
-
   const kelasSubSelect = document.getElementById("kelasSub");
   const kelasTingkatSelect = document.getElementById("kelasTingkat");
 
@@ -303,11 +290,29 @@
     kelasSubSelect.disabled = false;
   });
 
-  document.getElementById("startBtn").addEventListener('click', () => {
+  // 🔒 Cek nama sudah dipakai atau belum
+  document.getElementById("startBtn").addEventListener('click', async () => {
     const nama = document.getElementById("nama").value.trim();
     const kelas = kelasTingkatSelect.value;
     const subkelasValue = kelasSubSelect.value;
-    if (!nama || !kelas || !subkelasValue) { alert("Isi nama & pilih kelas/subkelas dulu."); return; }
+
+    if (!nama || !kelas || !subkelasValue) {
+      alert("Isi nama & pilih kelas/subkelas dulu.");
+      return;
+    }
+
+    // cek apakah nama sudah ada di database voters
+    const votersSnap = await get(ref(db, "voters"));
+    const voters = votersSnap.val() || {};
+    const namaSudahAda = Object.values(voters).some(v =>
+      v.nama && v.nama.toLowerCase() === nama.toLowerCase()
+    );
+
+    if (namaSudahAda) {
+      alert("Nama ini sudah digunakan untuk voting! Gunakan nama lain.");
+      return;
+    }
+
     currentUser = { nama, kelas, subkelas: subkelasValue };
     document.getElementById("formBox").style.display = 'none';
     document.getElementById("voteBox").style.display = 'block';
