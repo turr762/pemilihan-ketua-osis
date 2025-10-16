@@ -91,18 +91,19 @@
   <div class="box" id="formBox">
     <div class="row">
       <input id="nama" type="text" placeholder="Nama" style="min-width:200px" />
-      <select id="kelasTingkat" style="min-width:120px;">
+      <select id="kelasTingkat" style="min-width:150px;">
         <option value="">Pilih Tingkat</option>
         <option value="7">Kelas 7</option>
         <option value="8">Kelas 8</option>
         <option value="9">Kelas 9</option>
+        <option value="Guru">Guru / Wali Kelas</option>
       </select>
-      <select id="kelasSub" style="min-width:120px;" disabled>
-        <option value="">Pilih Subkelas</option>
+      <select id="kelasSub" style="min-width:150px;" disabled>
+        <option value="">Pilih Subkelas / Wali Kelas</option>
       </select>
       <button id="startBtn">Mulai Voting</button>
     </div>
-    <div class="muted">Isi nama & pilih kelas dulu, lalu pilih kandidat.</div>
+    <div class="muted">Isi nama & pilih kelas atau guru, lalu pilih kandidat.</div>
   </div>
 
   <!-- kandidat -->
@@ -150,7 +151,7 @@
 
   let currentUser = null;
   let photos = [];
-  let imageUnlocked = false; // 🔒 status kunci
+  let imageUnlocked = false;
 
   const photosRef = ref(db, "photos");
   onValue(photosRef, snap => {
@@ -264,37 +265,59 @@
     await set(vref, {
       nama: currentUser.nama,
       kelas: currentUser.kelas,
+      subkelas: currentUser.subkelas,
       kandidat: KANDIDAT[index],
       waktu: Date.now()
     });
     const pv = push(ref(db, "voters"));
-    await set(pv, { nama: currentUser.nama, kelas: currentUser.kelas, waktu: Date.now() });
+    await set(pv, { nama: currentUser.nama, kelas: currentUser.kelas, subkelas: currentUser.subkelas, waktu: Date.now() });
     alert("Terima kasih — suara sudah tercatat.");
     location.reload();
   }
 
   const subkelas = ["A","B","C","D","E","F","G","H"];
+  const waliKelas = [
+    "Pak Muhammad Rizal, S.Pd.I",
+    "Bu Ayu Tri Hapsari, S.Pd",
+    "Pak Deni Suryana, S.Pd",
+    "Bu Rina Wulandari, S.Pd",
+    "Pak Rudi Hartono, S.Pd",
+    "Bu Nita Marlina, S.Pd"
+  ];
+
   const kelasSubSelect = document.getElementById("kelasSub");
   const kelasTingkatSelect = document.getElementById("kelasTingkat");
 
   kelasTingkatSelect.addEventListener('change', () => {
     const tingkat = kelasTingkatSelect.value;
-    kelasSubSelect.innerHTML = '<option value="">Pilih Subkelas</option>';
+    kelasSubSelect.innerHTML = '<option value="">Pilih Subkelas / Wali Kelas</option>';
     if (!tingkat) { kelasSubSelect.disabled = true; return; }
-    subkelas.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = `${tingkat}${s}`;
-      opt.textContent = `${tingkat}${s}`;
-      kelasSubSelect.appendChild(opt);
-    });
+
+    if (tingkat === "Guru") {
+      waliKelas.forEach(nama => {
+        const opt = document.createElement('option');
+        opt.value = nama;
+        opt.textContent = nama;
+        kelasSubSelect.appendChild(opt);
+      });
+    } else {
+      subkelas.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = `${tingkat}${s}`;
+        opt.textContent = `${tingkat}${s}`;
+        kelasSubSelect.appendChild(opt);
+      });
+    }
+
     kelasSubSelect.disabled = false;
   });
 
   document.getElementById("startBtn").addEventListener('click', () => {
     const nama = document.getElementById("nama").value.trim();
-    const kelas = kelasSubSelect.value;
-    if (!nama || !kelas) { alert("Isi nama & pilih kelas dulu."); return; }
-    currentUser = { nama, kelas };
+    const kelas = kelasTingkatSelect.value;
+    const subkelasValue = kelasSubSelect.value;
+    if (!nama || !kelas || !subkelasValue) { alert("Isi nama & pilih kelas/subkelas dulu."); return; }
+    currentUser = { nama, kelas, subkelas: subkelasValue };
     document.getElementById("formBox").style.display = 'none';
     document.getElementById("voteBox").style.display = 'block';
     renderCandidates();
@@ -311,7 +334,6 @@
     location.reload();
   });
 
-  // 🔒 FITUR KUNCI / BUKA KUNCI GAMBAR
   const unlockBtn = document.getElementById("unlockBtn");
   const lockBtn = document.getElementById("lockBtn");
 
