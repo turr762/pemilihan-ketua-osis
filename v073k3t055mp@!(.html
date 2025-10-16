@@ -1,130 +1,3 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <title>Voting Ketua OSIS SMPN 219 Jakarta</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: url('https://assets.promediateknologi.id/crop/0x0:0x0/750x500/webp/photo/2022/09/09/1790436385.jpg') no-repeat center center fixed;
-      background-size: cover;
-      color: #fff;
-      text-align: center;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      position: relative;
-      z-index: 1;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: rgba(60, 0, 130, 0.6);
-      backdrop-filter: blur(2px);
-      z-index: -1;
-    }
-
-    h1 { margin: 10px 0 20px; }
-    .box {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 18px;
-      border-radius: 12px;
-      max-width: 980px;
-      width: 100%;
-      box-sizing: border-box;
-      margin-bottom: 16px;
-      backdrop-filter: blur(4px);
-    }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-    input[type="text"], select, input[type="password"], button {
-      padding: 10px; border-radius: 8px; border: 0; font-size: 15px;
-    }
-    button { background: #ff7eb3; color: #fff; cursor: pointer; }
-    button.secondary { background: #ffcc00; color: #000; }
-    .candidate-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 12px; }
-    .candidate {
-      background: rgba(255, 255, 255, 0.15);
-      color: #111;
-      padding: 12px;
-      border-radius: 12px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      box-sizing: border-box;
-    }
-    .candidate img {
-      width: 300px;
-      height: 300px;
-      object-fit: cover;
-      border-radius: 10px;
-      flex: 0 0 300px;
-      background: #ddd;
-    }
-    .candidate .meta {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    .candidate .meta h3 { margin: 0; }
-    .candidate .meta .controls { display: flex; gap: 8px; flex-wrap: wrap; }
-    .small { padding: 8px 10px; font-size: 14px; border-radius: 8px; background: #eee; color: #111; cursor: pointer; border: 0; }
-    .fileInput { background: transparent; color: inherit; }
-    .muted { color: rgba(255, 255, 255, 0.85); font-size: 13px; }
-
-    @media (max-width: 720px) {
-      .candidate { flex-direction: column; align-items: center; text-align: center; }
-      .candidate img { width: 200px; height: 200px; flex: 0 0 200px; }
-    }
-  </style>
-</head>
-<body>
-  <h1>Voting Ketua OSIS — SMPN 219 Jakarta</h1>
-
-  <!-- form -->
-  <div class="box" id="formBox">
-    <div class="row">
-      <input id="nama" type="text" placeholder="Nama" style="min-width:200px" />
-      <select id="kelasTingkat" style="min-width:150px;">
-        <option value="">Pilih Tingkat</option>
-        <option value="7">Kelas 7</option>
-        <option value="8">Kelas 8</option>
-        <option value="9">Kelas 9</option>
-        <option value="Guru">Guru / Wali Kelas</option>
-      </select>
-      <select id="kelasSub" style="min-width:150px;" disabled>
-        <option value="">Pilih Subkelas / Wali Kelas</option>
-      </select>
-      <button id="startBtn">Mulai Voting</button>
-    </div>
-    <div class="muted">Isi nama & pilih kelas atau guru, lalu pilih kandidat.</div>
-  </div>
-
-  <!-- kandidat -->
-  <div class="box" id="voteBox" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <div class="muted">Pilih 1 kandidat — foto bisa di-upload/hapus (jika kunci terbuka)</div>
-      <div class="row">
-        <input id="resetCode" type="password" placeholder="Kode reset (admin)" />
-        <button id="resetBtn" class="secondary">Reset Semua Data</button>
-      </div>
-    </div>
-
-    <div class="row" style="margin-top:10px">
-      <input id="unlockCode" type="password" placeholder="Kode kunci gambar" />
-      <button id="unlockBtn" class="secondary">Buka Kunci Gambar</button>
-      <button id="lockBtn" class="secondary" style="display:none;">Kunci Kembali</button>
-    </div>
-
-    <div class="candidate-container" id="candidateContainer"></div>
-  </div>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
   import { getDatabase, ref, set, push, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
@@ -275,7 +148,6 @@
   }
 
   const subkelas = ["A","B","C","D","E","F","G","H"];
-
   const kelasSubSelect = document.getElementById("kelasSub");
   const kelasTingkatSelect = document.getElementById("kelasTingkat");
 
@@ -303,11 +175,24 @@
     kelasSubSelect.disabled = false;
   });
 
-  document.getElementById("startBtn").addEventListener('click', () => {
+  // 🔒 CEK NAMA SUDAH PERNAH DIPAKAI ATAU BELUM
+  document.getElementById("startBtn").addEventListener('click', async () => {
     const nama = document.getElementById("nama").value.trim();
     const kelas = kelasTingkatSelect.value;
     const subkelasValue = kelasSubSelect.value;
     if (!nama || !kelas || !subkelasValue) { alert("Isi nama & pilih kelas/subkelas dulu."); return; }
+
+    // 🔍 Cek apakah nama sudah ada di database
+    const votersSnap = await get(ref(db, "voters"));
+    if (votersSnap.exists()) {
+      const data = Object.values(votersSnap.val());
+      const sudahAda = data.some(v => v.nama.toLowerCase() === nama.toLowerCase());
+      if (sudahAda) {
+        alert("Nama ini sudah digunakan untuk voting! Silakan gunakan nama lain.");
+        return;
+      }
+    }
+
     currentUser = { nama, kelas, subkelas: subkelasValue };
     document.getElementById("formBox").style.display = 'none';
     document.getElementById("voteBox").style.display = 'block';
@@ -357,5 +242,3 @@
     }
   })();
 </script>
-</body>
-</html>
