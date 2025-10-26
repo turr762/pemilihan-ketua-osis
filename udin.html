@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I Love You 💘</title>
+  <style>
+    body {
+      font-family: "Comic Sans MS", cursive;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      overflow: hidden;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      color: #fff;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+
+    .buttons {
+      margin-top: 30px;
+    }
+
+    button {
+      font-size: 1.5em;
+      padding: 10px 25px;
+      margin: 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    #yes {
+      background-color: #ff4d6d;
+      color: white;
+    }
+
+    #no {
+      background-color: #aaa;
+      color: white;
+      position: absolute;
+    }
+
+    #yes:hover {
+      background-color: #ff758f;
+    }
+
+    #message {
+      margin-top: 40px;
+      font-size: 2em;
+      color: #fff;
+      display: none;
+      text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <h1>Kamu sayang aku nggak? 😳❤️</h1>
+  <div class="buttons">
+    <button id="yes">Yes</button>
+    <button id="no">No</button>
+  </div>
+  <div id="message">Aku juga sayang kamu 😍💖</div>
+
+  <script>
+    const noBtn = document.getElementById('no');
+    const yesBtn = document.getElementById('yes');
+    const message = document.getElementById('message');
+
+    // Saat kursor mendekat ke tombol "No", tombol akan kabur
+    document.addEventListener('mousemove', (e) => {
+      const rect = noBtn.getBoundingClientRect();
+      const distance = Math.hypot(
+        e.clientX - (rect.left + rect.width / 2),
+        e.clientY - (rect.top + rect.height / 2)
+      );
+
+      if (distance < 100) {
+        const newX = Math.random() * (window.innerWidth - rect.width);
+        const newY = Math.random() * (window.innerHeight - rect.height);
+        noBtn.style.left = `${newX}px`;
+        noBtn.style.top = `${newY}px`;
+      }
+    });
+
+    // Saat "Yes" diklik
+    yesBtn.addEventListener('click', () => {
+      message.style.display = 'block';
+      yesBtn.style.display = 'none';
+      noBtn.style.display = 'none';
+    });
+
+    // Supaya di awal posisi "No" random
+    window.onload = () => {
+      const rect = noBtn.getBoundingClientRect();
+      noBtn.style.left = `${Math.random() * (window.innerWidth - rect.width)}px`;
+      noBtn.style.top = `${Math.random() * (window.innerHeight - rect.height)}px`;
+    };
+  </script>
+</body>
+</html>
