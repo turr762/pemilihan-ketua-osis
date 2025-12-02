@@ -1,283 +1,195 @@
-import React, { useEffect, useRef, useState } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Secure Exam — Web</title>
+<style>
+/* ========= CSS ========= */
 
-// Exambro-like single-file React app (App.jsx)
-// Features included:
-// - Fullscreen kiosk mode request
-// - Block right-click, selection, copy/paste
-// - Intercept common devtools / shortcut keys (best-effort)
-// - Detect visibility/focus changes (tab switches, app switch)
-// - Blur/visibility change violation counting and optional auto-submit
-// - Simple timer and question UI
-// - Overlay warnings
-//
-// IMPORTANT LIMITATIONS (read before using):
-// - A web app cannot reliably prevent OS-level screenshots, video capture, or hardware screen recorders.
-// - A web app cannot fully stop a determined user from opening developer tools. You can only make it harder.
-// - For real, secure exam environments you MUST combine this with device management (kiosk mode, MDM),
-//   secure browsers, proctoring servers, and legal/administrative controls.
-// - This sample is educational and for legitimate lockdown/kiosk deployments only.
-
-export default function App() {
-  const [started, setStarted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(60 * 30); // 30 minutes default
-  const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [violations, setViolations] = useState(0);
-  const [warning, setWarning] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
-  const violationLimit = 3; // after this: auto-submit
-  const examRef = useRef(null);
-  const questions = [
-    { id: 1, text: "What is 2 + 2?", choices: ["1","2","3","4"] },
-    { id: 2, text: "Select the capital of Indonesia.", choices: ["Jakarta","Bandung","Surabaya","Medan"] },
-    // more questions...
-  ];
-
-  // Helper: request fullscreen and lock pointer (kiosk-like)
-  async function enterKioskMode() {
-    try {
-      const el = examRef.current || document.documentElement;
-      if (el.requestFullscreen) await el.requestFullscreen();
-      else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-      // pointer lock is optional; commented out because pointer lock changes UX
-      // if (el.requestPointerLock) el.requestPointerLock();
-    } catch (err) {
-      console.error("Could not enter fullscreen:", err);
-    }
-  }
-
-  // Start exam
-  const startExam = async () => {
-    setStarted(true);
-    await enterKioskMode();
-    // focus the window
-    window.focus();
-  };
-
-  // Timer
-  useEffect(() => {
-    if (!started || submitted) return;
-    const t = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(t);
-          autoSubmit("time_up");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, [started, submitted]);
-
-  // Auto-submit handler
-  const autoSubmit = (reason = "user") => {
-    setSubmitted(true);
-    setWarning(`Submitted (${reason}). Violations: ${violations}`);
-    // send answers to server here (fetch POST)
-    console.log("Submitting answers:", answers, { reason, violations });
-  };
-
-  // Visibility / focus monitoring
-  useEffect(() => {
-    function onVisibilityChange() {
-      if (document.hidden) {
-        addViolation('visibility_hidden');
-      }
-    }
-    function onBlur() {
-      addViolation('blur');
-    }
-    function onFocus() {
-      // optional: remove temporary warning
-      setWarning(null);
-    }
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener('blur', onBlur);
-    window.addEventListener('focus', onFocus);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener('blur', onBlur);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [violations]);
-
-  const addViolation = (type) => {
-    setViolations(v => {
-      const nv = v + 1;
-      setWarning(`Violation #${nv}: ${type}`);
-      if (nv >= violationLimit) {
-        autoSubmit('too_many_violations');
-      }
-      return nv;
-    });
-  };
-
-  // Block right-click, selection, copy/paste, certain keys
-  useEffect(() => {
-    function onContextMenu(e) {
-      e.preventDefault();
-      addViolation('contextmenu');
-      return false;
-    }
-    function onCopy(e) {
-      e.preventDefault();
-      addViolation('copy');
-      return false;
-    }
-    function onCut(e) {
-      e.preventDefault();
-      addViolation('cut');
-      return false;
-    }
-    function onPaste(e) {
-      e.preventDefault();
-      addViolation('paste');
-      return false;
-    }
-    function onKeyDown(e) {
-      // intercept common devtools/shortcuts
-      const blocked = [
-        // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+Shift+C, Ctrl+P (print), Ctrl+T (new tab)
-        e.key === 'F12',
-        (e.ctrlKey || e.metaKey) && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase()),
-        (e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'U',
-        (e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'P',
-        (e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'T',
-        (e.ctrlKey || e.metaKey) && e.key.toUpperCase() === 'R', // reload
-      ];
-      if (blocked.some(Boolean)) {
-        e.preventDefault();
-        addViolation('blocked_key');
-        return false;
-      }
-      return true;
-    }
-    document.addEventListener('contextmenu', onContextMenu);
-    document.addEventListener('copy', onCopy);
-    document.addEventListener('cut', onCut);
-    document.addEventListener('paste', onPaste);
-    document.addEventListener('keydown', onKeyDown);
-    // disable selection via CSS as well
-    return () => {
-      document.removeEventListener('contextmenu', onContextMenu);
-      document.removeEventListener('copy', onCopy);
-      document.removeEventListener('cut', onCut);
-      document.removeEventListener('paste', onPaste);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, []);
-
-  // Prevent navigation away
-  useEffect(() => {
-    const before = (e) => {
-      if (!started || submitted) return;
-      e.preventDefault();
-      e.returnValue = '';
-      addViolation('navigation_attempt');
-      return '';
-    };
-    window.addEventListener('beforeunload', before);
-    return () => window.removeEventListener('beforeunload', before);
-  }, [started, submitted]);
-
-  const selectAnswer = (qid, choice) => {
-    setAnswers(a => ({ ...a, [qid]: choice }));
-  };
-
-  const nextQ = () => setCurrentQ(i => Math.min(i + 1, questions.length - 1));
-  const prevQ = () => setCurrentQ(i => Math.max(i - 1, 0));
-
-  return (
-    <div ref={examRef} style={{height: '100vh', width: '100vw', userSelect: 'none'}}>
-      <div style={{padding:20, fontFamily:'Inter, Arial, sans-serif'}}>
-        {!started ? (
-          <div style={{maxWidth:800, margin:'40px auto', textAlign:'center'}}>
-            <h1 style={{fontSize:28}}>Secure Exam — Demo</h1>
-            <p>This demo shows common lockdown-browser features (client-side only).</p>
-            <button onClick={startExam} style={{padding:'10px 18px', fontSize:16}}>Start Exam (enter fullscreen)</button>
-            <p style={{marginTop:12, color:'#666'}}>Limitations: cannot block screenshots or guaranteed devtools prevention.</p>
-          </div>
-        ) : (
-          <div>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <div>Time left: {Math.floor(timeLeft/60)}:{String(timeLeft%60).padStart(2,'0')}</div>
-              <div>Violations: {violations}/{violationLimit} {warning ? ` — ${warning}` : ''}</div>
-              <div>
-                <button onClick={() => autoSubmit('manual')}>Submit</button>
-              </div>
-            </div>
-
-            {submitted ? (
-              <div style={{marginTop:40}}>
-                <h2>Exam submitted</h2>
-                <pre>{JSON.stringify({answers, violations}, null, 2)}</pre>
-              </div>
-            ) : (
-              <div style={{display:'grid', gridTemplateColumns:'1fr 300px', gap:20, marginTop:18}}>
-                <div style={{background:'#fff', padding:18, borderRadius:8}}>
-                  <h3>Question {currentQ+1} / {questions.length}</h3>
-                  <p>{questions[currentQ].text}</p>
-                  <div style={{display:'flex', flexDirection:'column', gap:8, marginTop:8}}>
-                    {questions[currentQ].choices.map(c => (
-                      <label key={c} style={{display:'block', padding:8, border:'1px solid #eee', borderRadius:6}}>
-                        <input type="radio" name={`q${currentQ}`} checked={answers[questions[currentQ].id]===c} onChange={() => selectAnswer(questions[currentQ].id, c)} /> {' '}
-                        {c}
-                      </label>
-                    ))}
-                  </div>
-
-                  <div style={{marginTop:16, display:'flex', gap:8}}>
-                    <button onClick={prevQ} disabled={currentQ===0}>Previous</button>
-                    <button onClick={nextQ} disabled={currentQ===questions.length-1}>Next</button>
-                  </div>
-                </div>
-                <div style={{background:'#fafafa', padding:14, borderRadius:8}}>
-                  <h4>Student info</h4>
-                  <p>Show non-editable info here</p>
-                  <h4 style={{marginTop:12}}>Exam controls</h4>
-                  <button onClick={() => { setWarning('Locking navigation (not real)'); }}>Lock (demo)</button>
-                  <div style={{marginTop:12}}>
-                    <strong>Notes</strong>
-                    <ul>
-                      <li>All interactions monitored</li>
-                      <li>Switching away may be recorded as violation</li>
-                      <li>Admin server needed for real deployment</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* soft visual hint to discourage screenshots */}
-        <div style={{position:'fixed', left:8, bottom:8, opacity:0.6, fontSize:12}}>Secure Exam — Do not leave this window</div>
-
-      </div>
-
-      {/* CSS to further deter selection and printing */}
-      <style>{`
-        * { -webkit-user-select: none; -ms-user-select: none; user-select: none; }
-        @media print { body { display:none } }
-      `}</style>
-    </div>
-  );
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background: #f1f3f6;
+  user-select: none;
 }
 
-/*
-Server-side recommendations (not included here):
-- Serve exam over HTTPS.
-- Use authentication (JWT/session) and short-lived exam tokens.
-- Record events (violations, focus changes) to server with timestamps.
-- Store logs and tie to student/device.
-- Optionally use WebRTC / secure proctoring streams.
+.header {
+  width: 100%;
+  padding: 12px 20px;
+  background: #1F2A44;
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-Packaging recommendations:
-- For stronger lockdown, run this inside a managed WebView or custom browser app (Android/iOS) with device management (kiosk mode).
-- On desktop, use OS kiosk features or managed Chromebooks with extension policies.
+.exam-container {
+  margin: auto;
+  margin-top: 20px;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  width: 90%;
+  max-width: 900px;
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+}
 
-Security & ethics:
-- Only deploy in environments where you have legal authority to monitor the machine.
-- Inform test-takers about logging and privacy.
-*/
+.question-text {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.choice {
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-bottom: 6px;
+}
+
+.choice:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 6px;
+  margin-top: 10px;
+}
+
+.btn-primary {
+  background: #2F6FED;
+  color: white;
+}
+
+.btn-secondary {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn-danger {
+  background: #E53935;
+  color: white;
+}
+
+.btn:disabled {
+  background: #c5c5c5;
+  cursor: not-allowed;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>Secure Exam — Locked Browser</div>
+  <div id="timerDisplay">60:00</div>
+</div>
+
+<div class="exam-container">
+  <div id="questionBox" class="question-text"></div>
+  <div id="choicesBox"></div>
+  <br>
+
+  <button class="btn btn-secondary" onclick="prevQ()">Previous</button>
+  <button class="btn btn-primary" onclick="nextQ()">Next</button>
+  <button class="btn btn-danger" onclick="submitExam()">Submit</button>
+</div>
+
+<script>
+/* ========= JS ========= */
+
+let current = 0;
+let violations = 0;
+let timeLeft = 60*60;
+
+const questions = [
+  { q:"Ibukota Indonesia?", c:["Bandung","Medan","Jakarta","Surabaya"], a:2 },
+  { q:"Gunung tertinggi di Jawa?", c:["Merapi","Slamet","Sumbing","Semeru"], a:3 },
+];
+
+let answers = new Array(questions.length).fill(null);
+
+function render(){
+  document.getElementById("questionBox").innerText =
+    `Question ${current+1}/${questions.length}: ${questions[current].q}`;
+
+  let html = "";
+  questions[current].c.forEach((opt,i)=>{
+    html += `<div class="choice" onclick="selectAnswer(${i})">
+      <input type="radio" name="ans" ${answers[current]==i?"checked":""}> ${opt}
+    </div>`;
+  });
+  document.getElementById("choicesBox").innerHTML = html;
+}
+
+function selectAnswer(i){
+  answers[current] = i;
+}
+
+function nextQ(){
+  if(current < questions.length-1){
+    current++;
+    render();
+  }
+}
+
+function prevQ(){
+  if(current > 0){
+    current--;
+    render();
+  }
+}
+
+function submitExam(){
+  alert("Exam Submitted.\nJawaban: " + JSON.stringify(answers));
+}
+
+// Timer
+setInterval(()=>{
+  if(timeLeft>0){
+    timeLeft--;
+    let m = Math.floor(timeLeft/60);
+    let s = timeLeft%60;
+    document.getElementById("timerDisplay").innerText =
+      `${m}:${s.toString().padStart(2,'0')}`;
+  }
+},1000);
+
+// Prevent copy, paste, inspect, screenshot attempt etc
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("copy", e => e.preventDefault());
+document.addEventListener("paste", e => e.preventDefault());
+document.addEventListener("cut", e => e.preventDefault());
+
+document.addEventListener("keydown", e => {
+  if(e.ctrlKey && e.key === 'c') e.preventDefault();
+  if(e.ctrlKey && e.key === 'v') e.preventDefault();
+  if(e.key === "F12") e.preventDefault();
+});
+
+// Anti minimize / tab switch detection
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){
+    violations++;
+    console.log("Violation detected:", violations);
+    if(violations>=3){
+      alert("Terlalu banyak pelanggaran! Ujian otomatis dikunci!");
+      submitExam();
+    }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
