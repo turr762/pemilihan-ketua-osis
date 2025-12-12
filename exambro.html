@@ -1,195 +1,100 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Secure Exam — Web</title>
-<style>
-/* ========= CSS ========= */
-
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: Arial, sans-serif;
-  background: #f1f3f6;
-  user-select: none;
-}
-
-.header {
-  width: 100%;
-  padding: 12px 20px;
-  background: #1F2A44;
-  color: white;
-  font-size: 18px;
-  font-weight: 500;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.exam-container {
-  margin: auto;
-  margin-top: 20px;
-  background: white;
-  border-radius: 10px;
-  padding: 20px;
-  width: 90%;
-  max-width: 900px;
-  box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
-}
-
-.question-text {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 14px;
-}
-
-.choice {
-  border: 1px solid #ddd;
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-  margin-bottom: 6px;
-}
-
-.choice:hover {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.btn {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  margin-right: 6px;
-  margin-top: 10px;
-}
-
-.btn-primary {
-  background: #2F6FED;
-  color: white;
-}
-
-.btn-secondary {
-  background: #e0e0e0;
-  color: #333;
-}
-
-.btn-danger {
-  background: #E53935;
-  color: white;
-}
-
-.btn:disabled {
-  background: #c5c5c5;
-  cursor: not-allowed;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honkai: Star Rail - Website Interaktif</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f0f0; }
+        header { background-color: #333; color: white; text-align: center; padding: 20px; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        img { max-width: 100%; height: auto; border-radius: 8px; }
+        .tabs { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .tab-button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+        .tab-button.active { background: #0056b3; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .toggle-btn { background: #28a745; color: white; border: none; padding: 10px; cursor: pointer; margin-top: 10px; }
+        .hidden { display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .char-img { width: 50px; height: 50px; object-fit: cover; }
+    </style>
 </head>
 <body>
-
-<div class="header">
-  <div>Secure Exam — Locked Browser</div>
-  <div id="timerDisplay">60:00</div>
-</div>
-
-<div class="exam-container">
-  <div id="questionBox" class="question-text"></div>
-  <div id="choicesBox"></div>
-  <br>
-
-  <button class="btn btn-secondary" onclick="prevQ()">Previous</button>
-  <button class="btn btn-primary" onclick="nextQ()">Next</button>
-  <button class="btn btn-danger" onclick="submitExam()">Submit</button>
-</div>
-
-<script>
-/* ========= JS ========= */
-
-let current = 0;
-let violations = 0;
-let timeLeft = 60*60;
-
-const questions = [
-  { q:"Ibukota Indonesia?", c:["Bandung","Medan","Jakarta","Surabaya"], a:2 },
-  { q:"Gunung tertinggi di Jawa?", c:["Merapi","Slamet","Sumbing","Semeru"], a:3 },
-];
-
-let answers = new Array(questions.length).fill(null);
-
-function render(){
-  document.getElementById("questionBox").innerText =
-    `Question ${current+1}/${questions.length}: ${questions[current].q}`;
-
-  let html = "";
-  questions[current].c.forEach((opt,i)=>{
-    html += `<div class="choice" onclick="selectAnswer(${i})">
-      <input type="radio" name="ans" ${answers[current]==i?"checked":""}> ${opt}
-    </div>`;
-  });
-  document.getElementById("choicesBox").innerHTML = html;
-}
-
-function selectAnswer(i){
-  answers[current] = i;
-}
-
-function nextQ(){
-  if(current < questions.length-1){
-    current++;
-    render();
-  }
-}
-
-function prevQ(){
-  if(current > 0){
-    current--;
-    render();
-  }
-}
-
-function submitExam(){
-  alert("Exam Submitted.\nJawaban: " + JSON.stringify(answers));
-}
-
-// Timer
-setInterval(()=>{
-  if(timeLeft>0){
-    timeLeft--;
-    let m = Math.floor(timeLeft/60);
-    let s = timeLeft%60;
-    document.getElementById("timerDisplay").innerText =
-      `${m}:${s.toString().padStart(2,'0')}`;
-  }
-},1000);
-
-// Prevent copy, paste, inspect, screenshot attempt etc
-document.addEventListener("contextmenu", e => e.preventDefault());
-document.addEventListener("copy", e => e.preventDefault());
-document.addEventListener("paste", e => e.preventDefault());
-document.addEventListener("cut", e => e.preventDefault());
-
-document.addEventListener("keydown", e => {
-  if(e.ctrlKey && e.key === 'c') e.preventDefault();
-  if(e.ctrlKey && e.key === 'v') e.preventDefault();
-  if(e.key === "F12") e.preventDefault();
-});
-
-// Anti minimize / tab switch detection
-document.addEventListener("visibilitychange",()=>{
-  if(document.hidden){
-    violations++;
-    console.log("Violation detected:", violations);
-    if(violations>=3){
-      alert("Terlalu banyak pelanggaran! Ujian otomatis dikunci!");
-      submitExam();
-    }
-  }
-});
-
-render();
-</script>
-</body>
-</html>
+    <header>
+        <h1>Honkai: Star Rail</h1>
+        <p>Website Interaktif tentang Game RPG Gacha dari HoYoverse (Versi 3.7)</p>
+    </header>
+    
+    <div class="container">
+        <img src="https://static.wikia.nocookie.net/honkai-star-rail/images/0/0a/Honkai_Star_Rail_Logo.png" alt="Logo Honkai: Star Rail">
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('overview')">Overview</button>
+            <button class="tab-button" onclick="showTab('characters')">Karakter (Lengkap)</button>
+            <button class="tab-button" onclick="showTab('tips')">Tips</button>
+        </div>
+        
+        <div id="overview" class="tab-content active">
+            <h2>Overview</h2>
+            <p>Honkai: Star Rail adalah game RPG gacha yang dirilis pada April 2023 oleh HoYoverse. Ceritanya berputar di sekitar perjalanan dengan Astral Express, melawan ancaman Honkai di galaksi.</p>
+            <img src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5b/Astral_Express.png" alt="Astral Express">
+            <button class="toggle-btn" onclick="toggleElement('overview-desc')">Tampilkan Lebih Banyak</button>
+            <p id="overview-desc" class="hidden">Game ini menampilkan pertarungan turn-based, eksplorasi dunia terbuka, dan sistem gacha untuk mendapatkan karakter seperti Trailblazer (Stelle/Caelus).</p>
+        </div>
+        
+        <div id="characters" class="tab-content">
+            <h2>Daftar Karakter Lengkap (Hingga Versi 3.7)</h2>
+            <p>Berikut adalah semua karakter yang tersedia di Honkai: Star Rail hingga patch 3.7. Klik tombol di bawah untuk toggle tabel lengkap.</p>
+            <button class="toggle-btn" onclick="toggleElement('char-table')">Tampilkan Daftar Lengkap</button>
+            <div id="char-table" class="hidden">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Gambar</th>
+                            <th>Nama</th>
+                            <th>Rarity</th>
+                            <th>Path</th>
+                            <th>Elemen</th>
+                            <th>Deskripsi Singkat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 5-Star Characters -->
+                        <tr><td colspan="6"><strong>5-Star Characters</strong></td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4e/March_7th.png" alt="March 7th"></td><td>March 7th</td><td>5★</td><td>Preservation</td><td>Imaginary</td><td>Fotografer yang menggunakan kamera sebagai senjata.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5b/Dan_Heng.png" alt="Dan Heng"></td><td>Dan Heng</td><td>5★</td><td>Hunt</td><td>Wind</td><td>Pemburu naga dengan pedang tajam.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3a/Welt.png" alt="Welt"></td><td>Welt</td><td>5★</td><td>Nihility</td><td>Imaginary</td><td>Pelindung dari dunia lain dengan kemampuan waktu.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4a/Himeko.png" alt="Himeko"></td><td>Himeko</td><td>5★</td><td>Erudition</td><td>Fire</td><td>Navigator Astral Express dengan senjata api.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5e/Gepard.png" alt="Gepard"></td><td>Gepard</td><td>5★</td><td>Preservation</td><td>Ice</td><td>Kapten Garda Belobog yang tangguh.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3b/Luocha.png" alt="Luocha"></td><td>Luocha</td><td>5★</td><td>Abundance</td><td>Imaginary</td><td>Pedagang misterius dengan kemampuan penyembuhan.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4b/Blade.png" alt="Blade"></td><td>Blade</td><td>5★</td><td>Destruction</td><td>Wind</td><td>Pemburu Stellaron yang tak terkalahkan.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5c/Kafka.png" alt="Kafka"></td><td>Kafka</td><td>5★</td><td>Nihility</td><td>Lightning</td><td>Anggota Stellaron Hunters yang elegan.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3d/Silver_Wolf.png" alt="Silver Wolf"></td><td>Silver Wolf</td><td>5★</td><td>Nihility</td><td>Quantum</td><td>Hacker Stellaron Hunters yang cerdas.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4c/Yanqing.png" alt="Yanqing"></td><td>Yanqing</td><td>5★</td><td>Hunt</td><td>Ice</td><td>Murid Jing Yuan dengan pedang es.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5d/Bailu.png" alt="Bailu"></td><td>Bailu</td><td>5★</td><td>Abundance</td><td>Lightning</td><td>Dokter naga dengan kemampuan penyembuhan.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3e/Jing_Yuan.png" alt="Jing Yuan"></td><td>Jing Yuan</td><td>5★</td><td>Erudition</td><td>Lightning</td><td>Jenderal Xianzhou dengan strategi brilian.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4d/Dan_Heng_Imbibitor_Lunae.png" alt="Dan Heng • Imbibitor Lunae"></td><td>Dan Heng • Imbibitor Lunae</td><td>5★</td><td>Destruction</td><td>Imaginary</td><td>Varian Dan Heng dengan kekuatan naga.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5f/Fu_Xuan.png" alt="Fu Xuan"></td><td>Fu Xuan</td><td>5★</td><td>Preservation</td><td>Quantum</td><td>Diviner Xianzhou yang bijak.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3f/Jingliu.png" alt="Jingliu"></td><td>Jingliu</td><td>5★</td><td>Destruction</td><td>Ice</td><td>Pedang es yang legendaris.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4e/Seele.png" alt="Seele"></td><td>Seele</td><td>5★</td><td>Hunt</td><td>Quantum</td><td>Pemburu bayangan dengan kecepatan tinggi.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5g/Bronya.png" alt="Bronya"></td><td>Bronya</td><td>5★</td><td>Harmony</td><td>Wind</td><td>Pemimpin Belobog yang tegas.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3g/Clara.png" alt="Clara"></td><td>Clara</td><td>5★</td><td>Destruction</td><td>Physical</td><td>Gadis mekanik dengan palu raksasa.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4f/Argenti.png" alt="Argenti"></td><td>Argenti</td><td>5★</td><td>Erudition</td><td>Physical</td><td>Ksatria yang mencari keindahan.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5h/Huohuo.png" alt="Huohuo"></td><td>Huohuo</td><td>5★</td><td>Abundance</td><td>Wind</td><td>Foxian yang membawa keberuntungan.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3h/Jiaoqiu.png" alt="Jiaoqiu"></td><td>Jiaoqiu</td><td>5★</td><td>Nihility</td><td>Fire</td><td>Apoteker misterius dengan racun.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4g/Feixiao.png" alt="Feixiao"></td><td>Feixiao</td><td>5★</td><td>Hunt</td><td>Wind</td><td>Jenderal Xianzhou yang agresif.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5i/Lingsha.png" alt="Lingsha"></td><td>Lingsha</td><td>5★</td><td>Abundance</td><td>Fire</td><td>Penjaga makam dengan kemampuan api.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3i/Yunli.png" alt="Yunli"></td><td>Yunli</td><td>5★</td><td>Destruction</td><td>Physical</td><td>Petarung dengan pedang api.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4h/March_7th_Hunt.png" alt="March 7th (Hunt)"></td><td>March 7th (Hunt)</td><td>5★</td><td>Hunt</td><td>Imaginary</td><td>Varian March 7th dari dunia paralel.</td></tr>
+                        <!-- 4-Star Characters -->
+                        <tr><td colspan="6"><strong>4-Star Characters</strong></td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5a/Arlan.png" alt="Arlan"></td><td>Arlan</td><td>4★</td><td>Destruction</td><td>Lightning</td><td>Prajurit Belobog yang kuat.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3a/Asta.png" alt="Asta"></td><td>Asta</td><td>4★</td><td>Harmony</td><td>Fire</td><td>Penjaga Astral Express yang energik.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4a/Serval.png" alt="Serval"></td><td>Serval</td><td>4★</td><td>Erudition</td><td>Lightning</td><td>Musisi rock dengan shock elektrik.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5b/Sushang.png" alt="Sushang"></td><td>Sushang</td><td>4★</td><td>Hunt</td><td>Physical</td><td>Pelajar pedang yang antusias.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3b/Natasha.png" alt="Natasha"></td><td>Natasha</td><td>4★</td><td>Abundance</td><td>Physical</td><td>Dokter Underworld yang penyayang.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4b/Hook.png" alt="Hook"></td><td>Hook</td><td>4★</td><td>Destruction</td><td>Fire</td><td>Anak nakal dengan bom api.</td></tr>
+                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5c/Luka.png" alt="Luka"></td><td>Luka</td><
