@@ -3,98 +3,668 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Honkai: Star Rail - Website Interaktif</title>
+    <title>Permainan Catur</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f0f0f0; }
-        header { background-color: #333; color: white; text-align: center; padding: 20px; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        img { max-width: 100%; height: auto; border-radius: 8px; }
-        .tabs { display: flex; justify-content: space-around; margin-bottom: 20px; }
-        .tab-button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
-        .tab-button.active { background: #0056b3; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .toggle-btn { background: #28a745; color: white; border: none; padding: 10px; cursor: pointer; margin-top: 10px; }
-        .hidden { display: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .char-img { width: 50px; height: 50px; object-fit: cover; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 20px;
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #e94560;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 100%;
+        }
+        
+        .status {
+            font-size: 1.2rem;
+            font-weight: bold;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            width: min(80vw, 600px);
+            height: min(80vw, 600px);
+            border: 5px solid #333;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(12px + 1.5vw);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .square.light {
+            background-color: #f0d9b5;
+        }
+        
+        .square.dark {
+            background-color: #b58863;
+        }
+        
+        .square.selected {
+            background-color: #78b9ff;
+        }
+        
+        .square.valid-move {
+            position: relative;
+        }
+        
+        .square.valid-move::after {
+            content: '';
+            position: absolute;
+            width: 30%;
+            height: 30%;
+            border-radius: 50%;
+            background-color: rgba(0, 255, 0, 0.5);
+        }
+        
+        .square.capture-valid::after {
+            content: '';
+            position: absolute;
+            width: 90%;
+            height: 90%;
+            border-radius: 50%;
+            border: 5px solid rgba(255, 0, 0, 0.5);
+            background-color: transparent;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #e94560;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        button:hover {
+            background-color: #ff577f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .coordinates {
+            position: absolute;
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.7);
+        }
+        
+        .coordinate-file {
+            bottom: 2px;
+            right: 4px;
+        }
+        
+        .coordinate-rank {
+            top: 2px;
+            left: 4px;
+        }
+        
+        .captured-pieces {
+            display: flex;
+            justify-content: space-between;
+            width: min(80vw, 600px);
+            margin-top: 15px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        
+        .captured-white, .captured-black {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 600px) {
+            .status {
+                font-size: 1rem;
+                min-width: 250px;
+            }
+            
+            .square {
+                font-size: 1.8rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Honkai: Star Rail</h1>
-        <p>Website Interaktif tentang Game RPG Gacha dari HoYoverse (Versi 3.7)</p>
-    </header>
+    <h1>Permainan Catur</h1>
     
-    <div class="container">
-        <img src="https://static.wikia.nocookie.net/honkai-star-rail/images/0/0a/Honkai_Star_Rail_Logo.png" alt="Logo Honkai: Star Rail">
+    <div class="game-container">
+        <div class="status" id="status">Giliran Putih</div>
         
-        <div class="tabs">
-            <button class="tab-button active" onclick="showTab('overview')">Overview</button>
-            <button class="tab-button" onclick="showTab('characters')">Karakter (Lengkap)</button>
-            <button class="tab-button" onclick="showTab('tips')">Tips</button>
+        <div class="chessboard" id="chessboard">
+            <!-- Papan catur akan di-generate oleh JavaScript -->
         </div>
         
-        <div id="overview" class="tab-content active">
-            <h2>Overview</h2>
-            <p>Honkai: Star Rail adalah game RPG gacha yang dirilis pada April 2023 oleh HoYoverse. Ceritanya berputar di sekitar perjalanan dengan Astral Express, melawan ancaman Honkai di galaksi.</p>
-            <img src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5b/Astral_Express.png" alt="Astral Express">
-            <button class="toggle-btn" onclick="toggleElement('overview-desc')">Tampilkan Lebih Banyak</button>
-            <p id="overview-desc" class="hidden">Game ini menampilkan pertarungan turn-based, eksplorasi dunia terbuka, dan sistem gacha untuk mendapatkan karakter seperti Trailblazer (Stelle/Caelus).</p>
+        <div class="captured-pieces">
+            <div class="captured-white" id="captured-white"></div>
+            <div class="captured-black" id="captured-black"></div>
         </div>
         
-        <div id="characters" class="tab-content">
-            <h2>Daftar Karakter Lengkap (Hingga Versi 3.7)</h2>
-            <p>Berikut adalah semua karakter yang tersedia di Honkai: Star Rail hingga patch 3.7. Klik tombol di bawah untuk toggle tabel lengkap.</p>
-            <button class="toggle-btn" onclick="toggleElement('char-table')">Tampilkan Daftar Lengkap</button>
-            <div id="char-table" class="hidden">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Gambar</th>
-                            <th>Nama</th>
-                            <th>Rarity</th>
-                            <th>Path</th>
-                            <th>Elemen</th>
-                            <th>Deskripsi Singkat</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- 5-Star Characters -->
-                        <tr><td colspan="6"><strong>5-Star Characters</strong></td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4e/March_7th.png" alt="March 7th"></td><td>March 7th</td><td>5★</td><td>Preservation</td><td>Imaginary</td><td>Fotografer yang menggunakan kamera sebagai senjata.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5b/Dan_Heng.png" alt="Dan Heng"></td><td>Dan Heng</td><td>5★</td><td>Hunt</td><td>Wind</td><td>Pemburu naga dengan pedang tajam.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3a/Welt.png" alt="Welt"></td><td>Welt</td><td>5★</td><td>Nihility</td><td>Imaginary</td><td>Pelindung dari dunia lain dengan kemampuan waktu.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4a/Himeko.png" alt="Himeko"></td><td>Himeko</td><td>5★</td><td>Erudition</td><td>Fire</td><td>Navigator Astral Express dengan senjata api.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5e/Gepard.png" alt="Gepard"></td><td>Gepard</td><td>5★</td><td>Preservation</td><td>Ice</td><td>Kapten Garda Belobog yang tangguh.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3b/Luocha.png" alt="Luocha"></td><td>Luocha</td><td>5★</td><td>Abundance</td><td>Imaginary</td><td>Pedagang misterius dengan kemampuan penyembuhan.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4b/Blade.png" alt="Blade"></td><td>Blade</td><td>5★</td><td>Destruction</td><td>Wind</td><td>Pemburu Stellaron yang tak terkalahkan.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5c/Kafka.png" alt="Kafka"></td><td>Kafka</td><td>5★</td><td>Nihility</td><td>Lightning</td><td>Anggota Stellaron Hunters yang elegan.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3d/Silver_Wolf.png" alt="Silver Wolf"></td><td>Silver Wolf</td><td>5★</td><td>Nihility</td><td>Quantum</td><td>Hacker Stellaron Hunters yang cerdas.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4c/Yanqing.png" alt="Yanqing"></td><td>Yanqing</td><td>5★</td><td>Hunt</td><td>Ice</td><td>Murid Jing Yuan dengan pedang es.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5d/Bailu.png" alt="Bailu"></td><td>Bailu</td><td>5★</td><td>Abundance</td><td>Lightning</td><td>Dokter naga dengan kemampuan penyembuhan.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3e/Jing_Yuan.png" alt="Jing Yuan"></td><td>Jing Yuan</td><td>5★</td><td>Erudition</td><td>Lightning</td><td>Jenderal Xianzhou dengan strategi brilian.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4d/Dan_Heng_Imbibitor_Lunae.png" alt="Dan Heng • Imbibitor Lunae"></td><td>Dan Heng • Imbibitor Lunae</td><td>5★</td><td>Destruction</td><td>Imaginary</td><td>Varian Dan Heng dengan kekuatan naga.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5f/Fu_Xuan.png" alt="Fu Xuan"></td><td>Fu Xuan</td><td>5★</td><td>Preservation</td><td>Quantum</td><td>Diviner Xianzhou yang bijak.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3f/Jingliu.png" alt="Jingliu"></td><td>Jingliu</td><td>5★</td><td>Destruction</td><td>Ice</td><td>Pedang es yang legendaris.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4e/Seele.png" alt="Seele"></td><td>Seele</td><td>5★</td><td>Hunt</td><td>Quantum</td><td>Pemburu bayangan dengan kecepatan tinggi.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5g/Bronya.png" alt="Bronya"></td><td>Bronya</td><td>5★</td><td>Harmony</td><td>Wind</td><td>Pemimpin Belobog yang tegas.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3g/Clara.png" alt="Clara"></td><td>Clara</td><td>5★</td><td>Destruction</td><td>Physical</td><td>Gadis mekanik dengan palu raksasa.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4f/Argenti.png" alt="Argenti"></td><td>Argenti</td><td>5★</td><td>Erudition</td><td>Physical</td><td>Ksatria yang mencari keindahan.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5h/Huohuo.png" alt="Huohuo"></td><td>Huohuo</td><td>5★</td><td>Abundance</td><td>Wind</td><td>Foxian yang membawa keberuntungan.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3h/Jiaoqiu.png" alt="Jiaoqiu"></td><td>Jiaoqiu</td><td>5★</td><td>Nihility</td><td>Fire</td><td>Apoteker misterius dengan racun.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4g/Feixiao.png" alt="Feixiao"></td><td>Feixiao</td><td>5★</td><td>Hunt</td><td>Wind</td><td>Jenderal Xianzhou yang agresif.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5i/Lingsha.png" alt="Lingsha"></td><td>Lingsha</td><td>5★</td><td>Abundance</td><td>Fire</td><td>Penjaga makam dengan kemampuan api.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3i/Yunli.png" alt="Yunli"></td><td>Yunli</td><td>5★</td><td>Destruction</td><td>Physical</td><td>Petarung dengan pedang api.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4h/March_7th_Hunt.png" alt="March 7th (Hunt)"></td><td>March 7th (Hunt)</td><td>5★</td><td>Hunt</td><td>Imaginary</td><td>Varian March 7th dari dunia paralel.</td></tr>
-                        <!-- 4-Star Characters -->
-                        <tr><td colspan="6"><strong>4-Star Characters</strong></td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5a/Arlan.png" alt="Arlan"></td><td>Arlan</td><td>4★</td><td>Destruction</td><td>Lightning</td><td>Prajurit Belobog yang kuat.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3a/Asta.png" alt="Asta"></td><td>Asta</td><td>4★</td><td>Harmony</td><td>Fire</td><td>Penjaga Astral Express yang energik.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4a/Serval.png" alt="Serval"></td><td>Serval</td><td>4★</td><td>Erudition</td><td>Lightning</td><td>Musisi rock dengan shock elektrik.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5b/Sushang.png" alt="Sushang"></td><td>Sushang</td><td>4★</td><td>Hunt</td><td>Physical</td><td>Pelajar pedang yang antusias.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/3/3b/Natasha.png" alt="Natasha"></td><td>Natasha</td><td>4★</td><td>Abundance</td><td>Physical</td><td>Dokter Underworld yang penyayang.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/4/4b/Hook.png" alt="Hook"></td><td>Hook</td><td>4★</td><td>Destruction</td><td>Fire</td><td>Anak nakal dengan bom api.</td></tr>
-                        <tr><td><img class="char-img" src="https://static.wikia.nocookie.net/honkai-star-rail/images/5/5c/Luka.png" alt="Luka"></td><td>Luka</td><
+        <div class="controls">
+            <button id="new-game">Permainan Baru</button>
+            <button id="undo-move">Batalkan Langkah</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chessboard = document.getElementById('chessboard');
+            const statusDisplay = document.getElementById('status');
+            const newGameBtn = document.getElementById('new-game');
+            const undoBtn = document.getElementById('undo-move');
+            const capturedWhite = document.getElementById('captured-white');
+            const capturedBlack = document.getElementById('captured-black');
+            
+            let selectedPiece = null;
+            let currentPlayer = 'white';
+            let boardState = [];
+            let moveHistory = [];
+            let capturedPieces = { white: [], black: [] };
+            
+            // Inisialisasi papan catur
+            function initBoard() {
+                chessboard.innerHTML = '';
+                boardState = createInitialBoard();
+                renderBoard();
+                updateStatus();
+                updateCapturedPieces();
+            }
+            
+            // Membuat keadaan papan awal
+            function createInitialBoard() {
+                const board = [];
+                
+                // Inisialisasi papan kosong
+                for (let row = 0; row < 8; row++) {
+                    const rowArray = [];
+                    for (let col = 0; col < 8; col++) {
+                        rowArray.push(null);
+                    }
+                    board.push(rowArray);
+                }
+                
+                // Atur bidak hitam
+                board[0][0] = { type: 'rook', color: 'black', moved: false };
+                board[0][1] = { type: 'knight', color: 'black' };
+                board[0][2] = { type: 'bishop', color: 'black' };
+                board[0][3] = { type: 'queen', color: 'black' };
+                board[0][4] = { type: 'king', color: 'black', moved: false };
+                board[0][5] = { type: 'bishop', color: 'black' };
+                board[0][6] = { type: 'knight', color: 'black' };
+                board[0][7] = { type: 'rook', color: 'black', moved: false };
+                
+                for (let col = 0; col < 8; col++) {
+                    board[1][col] = { type: 'pawn', color: 'black', moved: false };
+                }
+                
+                // Atur bidak putih
+                board[7][0] = { type: 'rook', color: 'white', moved: false };
+                board[7][1] = { type: 'knight', color: 'white' };
+                board[7][2] = { type: 'bishop', color: 'white' };
+                board[7][3] = { type: 'queen', color: 'white' };
+                board[7][4] = { type: 'king', color: 'white', moved: false };
+                board[7][5] = { type: 'bishop', color: 'white' };
+                board[7][6] = { type: 'knight', color: 'white' };
+                board[7][7] = { type: 'rook', color: 'white', moved: false };
+                
+                for (let col = 0; col < 8; col++) {
+                    board[6][col] = { type: 'pawn', color: 'white', moved: false };
+                }
+                
+                return board;
+            }
+            
+            // Render papan catur
+            function renderBoard() {
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const square = document.createElement('div');
+                        square.classList.add('square');
+                        square.classList.add((row + col) % 2 === 0 ? 'light' : 'dark');
+                        square.dataset.row = row;
+                        square.dataset.col = col;
+                        
+                        // Tambahkan koordinat
+                        if (col === 7) {
+                            const rank = document.createElement('div');
+                            rank.classList.add('coordinates', 'coordinate-rank');
+                            rank.textContent = 8 - row;
+                            square.appendChild(rank);
+                        }
+                        
+                        if (row === 7) {
+                            const file = document.createElement('div');
+                            file.classList.add('coordinates', 'coordinate-file');
+                            file.textContent = String.fromCharCode(97 + col);
+                            square.appendChild(file);
+                        }
+                        
+                        // Tambahkan piece jika ada
+                        const piece = boardState[row][col];
+                        if (piece) {
+                            square.textContent = getPieceSymbol(piece);
+                            square.dataset.piece = `${piece.color}-${piece.type}`;
+                        }
+                        
+                        square.addEventListener('click', handleSquareClick);
+                        chessboard.appendChild(square);
+                    }
+                }
+            }
+            
+            // Dapatkan simbol Unicode untuk piece
+            function getPieceSymbol(piece) {
+                const symbols = {
+                    white: {
+                        king: '♔',
+                        queen: '♕',
+                        rook: '♖',
+                        bishop: '♗',
+                        knight: '♘',
+                        pawn: '♙'
+                    },
+                    black: {
+                        king: '♚',
+                        queen: '♛',
+                        rook: '♜',
+                        bishop: '♝',
+                        knight: '♞',
+                        pawn: '♟'
+                    }
+                };
+                
+                return symbols[piece.color][piece.type];
+            }
+            
+            // Handle klik pada kotak
+            function handleSquareClick(event) {
+                const row = parseInt(event.currentTarget.dataset.row);
+                const col = parseInt(event.currentTarget.dataset.col);
+                const piece = boardState[row][col];
+                
+                // Jika sudah ada piece yang dipilih
+                if (selectedPiece) {
+                    const [selectedRow, selectedCol] = selectedPiece;
+                    
+                    // Cek jika mengklik piece yang sama (batalkan seleksi)
+                    if (selectedRow === row && selectedCol === col) {
+                        clearSelection();
+                        return;
+                    }
+                    
+                    // Cek jika mengklik piece milik sendiri (pilih piece baru)
+                    if (piece && piece.color === currentPlayer) {
+                        clearSelection();
+                        selectPiece(row, col);
+                        return;
+                    }
+                    
+                    // Coba untuk melakukan pergerakan
+                    if (isValidMove(selectedRow, selectedCol, row, col)) {
+                        makeMove(selectedRow, selectedCol, row, col);
+                        clearSelection();
+                    }
+                } else if (piece && piece.color === currentPlayer) {
+                    // Pilih piece yang baru
+                    selectPiece(row, col);
+                }
+            }
+            
+            // Pilih piece
+            function selectPiece(row, col) {
+                selectedPiece = [row, col];
+                
+                // Highlight kotak yang dipilih
+                const squares = chessboard.querySelectorAll('.square');
+                squares.forEach(square => {
+                    square.classList.remove('selected', 'valid-move', 'capture-valid');
+                });
+                
+                const selectedIndex = row * 8 + col;
+                squares[selectedIndex].classList.add('selected');
+                
+                // Tampilkan pergerakan yang valid
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        if (isValidMove(row, col, r, c)) {
+                            const index = r * 8 + c;
+                            if (boardState[r][c]) {
+                                squares[index].classList.add('capture-valid');
+                            } else {
+                                squares[index].classList.add('valid-move');
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Bersihkan seleksi
+            function clearSelection() {
+                selectedPiece = null;
+                const squares = chessboard.querySelectorAll('.square');
+                squares.forEach(square => {
+                    square.classList.remove('selected', 'valid-move', 'capture-valid');
+                });
+            }
+            
+            // Cek apakah pergerakan valid
+            function isValidMove(fromRow, fromCol, toRow, toCol) {
+                const piece = boardState[fromRow][fromCol];
+                if (!piece) return false;
+                
+                // Cek jika kotak tujuan memiliki piece dengan warna yang sama
+                const targetPiece = boardState[toRow][toCol];
+                if (targetPiece && targetPiece.color === piece.color) return false;
+                
+                // Implementasi aturan pergerakan untuk setiap jenis piece
+                switch (piece.type) {
+                    case 'pawn':
+                        return isValidPawnMove(fromRow, fromCol, toRow, toCol, piece.color);
+                    case 'rook':
+                        return isValidRookMove(fromRow, fromCol, toRow, toCol);
+                    case 'knight':
+                        return isValidKnightMove(fromRow, fromCol, toRow, toCol);
+                    case 'bishop':
+                        return isValidBishopMove(fromRow, fromCol, toRow, toCol);
+                    case 'queen':
+                        return isValidQueenMove(fromRow, fromCol, toRow, toCol);
+                    case 'king':
+                        return isValidKingMove(fromRow, fromCol, toRow, toCol);
+                    default:
+                        return false;
+                }
+            }
+            
+            // Validasi pergerakan pawn
+            function isValidPawnMove(fromRow, fromCol, toRow, toCol, color) {
+                const direction = color === 'white' ? -1 : 1;
+                const startRow = color === 'white' ? 6 : 1;
+                
+                // Pergerakan maju
+                if (fromCol === toCol) {
+                    // Satu langkah maju
+                    if (toRow === fromRow + direction && !boardState[toRow][toCol]) {
+                        return true;
+                    }
+                    
+                    // Dua langkah maju dari posisi awal
+                    if (fromRow === startRow && toRow === fromRow + 2 * direction && 
+                        !boardState[fromRow + direction][fromCol] && !boardState[toRow][toCol]) {
+                        return true;
+                    }
+                }
+                
+                // Menangkap piece
+                if (Math.abs(fromCol - toCol) === 1 && toRow === fromRow + direction) {
+                    if (boardState[toRow][toCol] && boardState[toRow][toCol].color !== color) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+            
+            // Validasi pergerakan rook
+            function isValidRookMove(fromRow, fromCol, toRow, toCol) {
+                // Rook hanya bisa bergerak horizontal atau vertikal
+                if (fromRow !== toRow && fromCol !== toCol) return false;
+                
+                // Cek jika ada piece yang menghalangi
+                if (fromRow === toRow) {
+                    // Gerakan horizontal
+                    const start = Math.min(fromCol, toCol) + 1;
+                    const end = Math.max(fromCol, toCol);
+                    for (let col = start; col < end; col++) {
+                        if (boardState[fromRow][col]) return false;
+                    }
+                } else {
+                    // Gerakan vertikal
+                    const start = Math.min(fromRow, toRow) + 1;
+                    const end = Math.max(fromRow, toRow);
+                    for (let row = start; row < end; row++) {
+                        if (boardState[row][fromCol]) return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            // Validasi pergerakan knight
+            function isValidKnightMove(fromRow, fromCol, toRow, toCol) {
+                const rowDiff = Math.abs(fromRow - toRow);
+                const colDiff = Math.abs(fromCol - toCol);
+                
+                // Knight bergerak dalam bentuk L
+                return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
+            }
+            
+            // Validasi pergerakan bishop
+            function isValidBishopMove(fromRow, fromCol, toRow, toCol) {
+                // Bishop hanya bisa bergerak diagonal
+                if (Math.abs(fromRow - toRow) !== Math.abs(fromCol - toCol)) return false;
+                
+                // Cek jika ada piece yang menghalangi
+                const rowDirection = fromRow < toRow ? 1 : -1;
+                const colDirection = fromCol < toCol ? 1 : -1;
+                
+                let row = fromRow + rowDirection;
+                let col = fromCol + colDirection;
+                
+                while (row !== toRow && col !== toCol) {
+                    if (boardState[row][col]) return false;
+                    row += rowDirection;
+                    col += colDirection;
+                }
+                
+                return true;
+            }
+            
+            // Validasi pergerakan queen
+            function isValidQueenMove(fromRow, fromCol, toRow, toCol) {
+                // Queen bisa bergerak seperti rook atau bishop
+                return isValidRookMove(fromRow, fromCol, toRow, toCol) || 
+                       isValidBishopMove(fromRow, fromCol, toRow, toCol);
+            }
+            
+            // Validasi pergerakan king
+            function isValidKingMove(fromRow, fromCol, toRow, toCol) {
+                const rowDiff = Math.abs(fromRow - toRow);
+                const colDiff = Math.abs(fromCol - toCol);
+                
+                // King bisa bergerak satu kotak ke segala arah
+                return rowDiff <= 1 && colDiff <= 1;
+            }
+            
+            // Lakukan pergerakan
+            function makeMove(fromRow, fromCol, toRow, toCol) {
+                const piece = boardState[fromRow][fromCol];
+                const targetPiece = boardState[toRow][toCol];
+                
+                // Simpan keadaan sebelum bergerak untuk undo
+                moveHistory.push({
+                    from: { row: fromRow, col: fromCol, piece: piece },
+                    to: { row: toRow, col: toCol, piece: targetPiece },
+                    captured: targetPiece ? {...targetPiece} : null
+                });
+                
+                // Jika ada piece yang ditangkap, tambahkan ke daftar captured
+                if (targetPiece) {
+                    capturedPieces[targetPiece.color].push(targetPiece.type);
+                }
+                
+                // Pindahkan piece
+                boardState[toRow][toCol] = {...piece};
+                boardState[fromRow][fromCol] = null;
+                
+                // Tandai piece yang sudah bergerak (untuk pawn dan king)
+                if (piece.type === 'pawn' || piece.type === 'king' || piece.type === 'rook') {
+                    boardState[toRow][toCol].moved = true;
+                }
+                
+                // Ganti pemain
+                currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                
+                // Update tampilan
+                updateBoard();
+                updateStatus();
+                updateCapturedPieces();
+            }
+            
+            // Update tampilan papan
+            function updateBoard() {
+                const squares = chessboard.querySelectorAll('.square');
+                
+                for (let row = 0; row < 8; row++) {
+                    for (let col = 0; col < 8; col++) {
+                        const index = row * 8 + col;
+                        const square = squares[index];
+                        const piece = boardState[row][col];
+                        
+                        // Hapus kelas dan konten sebelumnya
+                        square.textContent = '';
+                        square.removeAttribute('data-piece');
+                        
+                        // Tambahkan koordinat
+                        if (col === 7) {
+                            const rank = document.createElement('div');
+                            rank.classList.add('coordinates', 'coordinate-rank');
+                            rank.textContent = 8 - row;
+                            square.appendChild(rank);
+                        }
+                        
+                        if (row === 7) {
+                            const file = document.createElement('div');
+                            file.classList.add('coordinates', 'coordinate-file');
+                            file.textContent = String.fromCharCode(97 + col);
+                            square.appendChild(file);
+                        }
+                        
+                        // Tambahkan piece jika ada
+                        if (piece) {
+                            square.textContent = getPieceSymbol(piece);
+                            square.dataset.piece = `${piece.color}-${piece.type}`;
+                        }
+                    }
+                }
+            }
+            
+            // Update status permainan
+            function updateStatus() {
+                statusDisplay.textContent = `Giliran ${currentPlayer === 'white' ? 'Putih' : 'Hitam'}`;
+            }
+            
+            // Update tampilan piece yang ditangkap
+            function updateCapturedPieces() {
+                capturedWhite.innerHTML = '';
+                capturedBlack.innerHTML = '';
+                
+                capturedPieces.white.forEach(piece => {
+                    const span = document.createElement('span');
+                    span.textContent = getPieceSymbol({ type: piece, color: 'white' });
+                    capturedWhite.appendChild(span);
+                });
+                
+                capturedPieces.black.forEach(piece => {
+                    const span = document.createElement('span');
+                    span.textContent = getPieceSymbol({ type: piece, color: 'black' });
+                    capturedBlack.appendChild(span);
+                });
+            }
+            
+            // Batalkan langkah terakhir
+            function undoMove() {
+                if (moveHistory.length === 0) return;
+                
+                const lastMove = moveHistory.pop();
+                const { from, to, captured } = lastMove;
+                
+                // Kembalikan piece ke posisi semula
+                boardState[from.row][from.col] = from.piece;
+                boardState[to.row][to.col] = captured;
+                
+                // Hapus dari captured pieces jika ada piece yang dikembalikan
+                if (captured) {
+                    const index = capturedPieces[captured.color].indexOf(captured.type);
+                    if (index > -1) {
+                        capturedPieces[captured.color].splice(index, 1);
+                    }
+                }
+                
+                // Kembalikan giliran ke pemain sebelumnya
+                currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                
+                // Update tampilan
+                updateBoard();
+                updateStatus();
+                updateCapturedPieces();
+            }
+            
+            // Event listeners untuk tombol
+            newGameBtn.addEventListener('click', () => {
+                if (confirm('Mulai permainan baru?')) {
+                    selectedPiece = null;
+                    currentPlayer = 'white';
+                    moveHistory = [];
+                    capturedPieces = { white: [], black: [] };
+                    initBoard();
+                }
+            });
+            
+            undoBtn.addEventListener('click', undoMove);
+            
+            // Inisialisasi permainan
+            initBoard();
+        });
+    </script>
+</body>
+</html>
