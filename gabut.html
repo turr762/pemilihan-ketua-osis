@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Valentine's Day</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;400&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 3rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 90%;
+            width: 400px;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+            height: 50px; /* Prevent layout jump */
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: 'Poppins', sans-serif;
+            font-weight: bold;
+        }
+
+        #yes-btn {
+            background-color: #ff4b6e;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 75, 110, 0.4);
+        }
+
+        #yes-btn:hover {
+            transform: scale(1.05);
+            background-color: #ff2e56;
+        }
+
+        #no-btn {
+            background-color: white;
+            color: #ff4b6e;
+            position: absolute;
+        }
+
+        #no-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Celebration Screen (Hidden by default) */
+        #celebration {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 2rem;
+            color: #ff4b6e;
+            animation: floatUp 4s linear infinite;
+            z-index: 1;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            h1 { font-size: 2.5rem; }
+            .container { padding: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Hearts Container -->
+    <div id="hearts-container"></div>
+
+    <div class="container">
+        <!-- Proposal Section -->
+        <div id="proposal">
+            <h1>Happy Valentine's Day</h1>
+            <p>Will you be my Valentine?</p>
+            
+            <div class="btn-container">
+                <button id="yes-btn" onclick="celebrate()">Yes, I will!</button>
+                <button id="no-btn" onmouseover="moveButton()" onclick="moveButton()">No</button>
+            </div>
+        </div>
+
+        <!-- Success Section -->
+        <div id="celebration">
+            <h1>I love you! ❤️</h1>
+            <p>You just made me the happiest person alive!</p>
+            <p style="font-size: 4rem;">🥰</p>
+        </div>
+    </div>
+
+    <script>
+        const noBtn = document.getElementById('no-btn');
+        const proposalDiv = document.getElementById('proposal');
+        const celebrationDiv = document.getElementById('celebration');
+        const container = document.querySelector('.container');
+
+        // Function to move the "No" button away
+        function moveButton() {
+            const x = Math.random() * 200 - 100; // Random offset X
+            const y = Math.random() * 200 - 100; // Random offset Y
+            
+            // Apply the movement
+            noBtn.style.transform = `translate(${x}px, ${y}px)`;
+            
+            // Change text to something cute
+            const phrases = ["Are you sure?", "Think again!", "Please?", "Don't do this to me!"];
+            noBtn.innerText = phrases[Math.floor(Math.random() * phrases.length)];
+        }
+
+        // Function to handle the "Yes" click
+        function celebrate() {
+            proposalDiv.classList.add('hidden');
+            celebrationDiv.style.display = 'flex';
+            
+            // Trigger heart explosion
+            for (let i = 0; i < 50; i++) {
+                setTimeout(createHeart, i * 100);
+            }
+        }
+
+        // Create a floating heart element
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = '❤️';
+            
+            // Random positioning
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = (Math.random() * 2 + 3) + 's'; // 3-5 seconds
+            
+            document.body.appendChild(heart);
+
+            // Remove heart after animation to keep DOM clean
+            setTimeout(() => {
+                heart.remove();
+            }, 5000);
+        }
+
+        // Optional: Create hearts periodically
+        setInterval(createHeart, 500);
+    </script>
+</body>
+</html>
