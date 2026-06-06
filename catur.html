@@ -8,13 +8,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <style>
-       .chess-board {
+      .chess-board {
             display: grid;
             grid-template-columns: repeat(8, minmax(0, 1fr));
             grid-template-rows: repeat(8, minmax(0, 1fr));
             aspect-ratio: 1 / 1;
         }
-       .square {
+      .square {
             position: relative;
             display: flex;
             align-items: center;
@@ -22,33 +22,33 @@
             user-select: none;
             cursor: pointer;
         }
-       .square-light {
+      .square-light {
             background-color: #f0d9b5;
             color: #b58863;
         }
-       .square-dark {
+      .square-dark {
             background-color: #b58863;
             color: #f0d9b5;
         }
-        /* Highlight ala Chess.com */
-       .square-selected {
+        /* Highlight premium ala Chess.com */
+      .square-selected {
             background-color: rgba(247, 247, 105, 0.6)!important;
         }
-       .square-last-move {
+      .square-last-move {
             background-color: rgba(186, 202, 43, 0.5)!important;
         }
-       .square-check {
+      .square-check {
             background-color: rgba(239, 68, 68, 0.6)!important;
         }
         /* Petunjuk langkah legal */
-       .legal-dot {
+      .legal-dot {
             width: 24%;
             height: 24%;
             background-color: rgba(0, 0, 0, 0.15);
             border-radius: 9999px;
             pointer-events: none;
         }
-       .legal-capture {
+      .legal-capture {
             width: 80%;
             height: 80%;
             border: 5px solid rgba(0, 0, 0, 0.15);
@@ -56,16 +56,16 @@
             pointer-events: none;
             position: absolute;
         }
-       .square-light.legal-dot { background-color: rgba(181, 136, 99, 0.4); }
-       .square-dark.legal-dot { background-color: rgba(240, 217, 181, 0.4); }
+      .square-light.legal-dot { background-color: rgba(181, 136, 99, 0.4); }
+      .square-dark.legal-dot { background-color: rgba(240, 217, 181, 0.4); }
         
-       .piece-img {
+      .piece-img {
             width: 90%;
             height: 90%;
             transition: transform 0.1s ease;
             z-index: 10;
         }
-       .piece-img:hover {
+      .piece-img:hover {
             transform: scale(1.05);
         }
     </style>
@@ -104,7 +104,7 @@
 
             <div class="bg-neutral-900 p-2 rounded-xl border border-neutral-800 shadow-2xl relative">
                 <div id="board" class="chess-board rounded-lg overflow-hidden">
-                    </div>
+                </div>
             </div>
 
             <div id="player-bottom-card" class="bg-neutral-900 p-3 rounded-lg flex items-center justify-between border border-neutral-800 transition-colors">
@@ -179,7 +179,7 @@
                         <div class="col-span-5">Hitam</div>
                     </div>
                     <div id="moves-container" class="space-y-1">
-                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -504,7 +504,6 @@
             container.innerHTML = '';
             const history = game.history();
             
-            let rowHTML = '';
             for (let i = 0; i < history.length; i += 2) {
                 const moveNum = Math.floor(i / 2) + 1;
                 const whiteMove = history[i];
@@ -566,7 +565,7 @@
                 } else if (game.in_threefold_repetition()) {
                     title = "Remis (Threefold Repetition)";
                     desc = "Klaim seri karena posisi papan yang sama telah terjadi sebanyak 3 kali.";
-                } else if (game.insufficient_material && game.insufficient_material()) {
+                } else if (game.isInsufficientMaterial && game.isInsufficientMaterial()) {
                     title = "Remis (Insufficient Material)";
                     desc = "Komposisi sisa bidak tidak cukup untuk menghasilkan posisi skakmat.";
                 } else if (game.in_draw()) {
@@ -605,14 +604,12 @@
                     if (whiteTime > 0) {
                         whiteTime--;
                     } else {
-                        // Putih Kalah Waktu
                         handleTimeout('w');
                     }
                 } else if (activeTimerColor === 'b') {
                     if (blackTime > 0) {
                         blackTime--;
                     } else {
-                        // Hitam Kalah Waktu
                         handleTimeout('b');
                     }
                 }
@@ -705,7 +702,6 @@
                     if (piece) {
                         const value = PIECE_VALUES[piece.type];
                         
-                        // Menghitung Sisi Matriks Posisi Mengikuti Kriteria Koordinat Balikan (Flipped)
                         let pstValue = 0;
                         const rIndex = piece.color === 'b'? r : 7 - r;
                         const cIndex = piece.color === 'b'? c : 7 - c;
@@ -784,15 +780,12 @@
             let selectedMove = null;
 
             if (aiDifficulty === 'easy') {
-                // Skenario 1: Level Mudah (Memilih Langkah Acak Secara Bebas)
                 const randomIdx = Math.floor(Math.random() * moves.length);
                 selectedMove = moves[randomIdx];
             } else if (aiDifficulty === 'medium') {
-                // Skenario 2: Level Sedang (Pencarian Minimax Kedalaman 2 Langkah)
                 const result = minimax(2, -Infinity, Infinity, false);
                 selectedMove = result.move || moves;
             } else if (aiDifficulty === 'hard') {
-                // Skenario 3: Level Sulit (Pencarian Mendalam 3 Langkah)
                 const result = minimax(3, -Infinity, Infinity, false);
                 selectedMove = result.move || moves;
             }
@@ -808,7 +801,6 @@
                 if (executed) {
                     lastMove = { from: selectedMove.from, to: selectedMove.to };
                     
-                    // Efek Suara Langkah AI
                     if (isCapture || executed.flags.includes('e')) {
                         playAudio('capture');
                     } else {
@@ -829,7 +821,6 @@
             stopTimer();
             game = new Chess();
             
-            // Mengambil Konfigurasi Input dari Menu UI
             gameMode = document.getElementById('select-game-mode').value;
             aiDifficulty = document.getElementById('select-ai-diff').value;
             const chosenMins = parseInt(document.getElementById('select-timer').value);
@@ -841,7 +832,6 @@
             lastMove = null;
             pendingPromotionMove = null;
 
-            // Inisialisasi Nama UI Sesuai Mode Game
             if (gameMode === 'vs_computer') {
                 document.getElementById('opponent-name').innerText = `AI Komputer (${aiDifficulty === 'easy'? 'Mudah' : aiDifficulty === 'medium'? 'Sedang' : 'Sulit'})`;
                 document.getElementById('opponent-sub').innerText = `Rating: ~${aiDifficulty === 'easy'? '800' : aiDifficulty === 'medium'? '1400' : '2000'} ELO`;
@@ -852,15 +842,12 @@
                 document.getElementById('opponent-avatar').innerHTML = '<i class="fa-solid fa-user-plus text-neutral-400"></i>';
             }
 
-            // Sinkronisasi Sisi Antarmuka
             updateClockDisplays();
             updateGameUI();
             
-            // Hilangkan Segala Bentuk Layar Modal Hasil Akhir yang Masih Muncul
             document.getElementById('modal-gameover').classList.add('hidden');
         }
 
-        // Event Listener Kendali Aksi
         document.getElementById('btn-new-game').addEventListener('click', initNewGame);
         
         document.getElementById('btn-close-gameover').addEventListener('click', () => {
@@ -868,24 +855,20 @@
             initNewGame();
         });
 
-        // Balik Orientasi Piringan Papan Catur
         document.getElementById('btn-flip').addEventListener('click', () => {
             boardFlipped =!boardFlipped;
             renderBoard();
         });
 
-        // Fitur Batalkan Langkah (Undo)
         document.getElementById('btn-undo').addEventListener('click', () => {
-            // Jika melawan komputer, lakukan undo 2 langkah (langkah AI dan langkah Anda)
             if (gameMode === 'vs_computer') {
                 if (game.history().length >= 2) {
                     game.undo();
                     game.undo();
-                    lastMove = null; // Reset highlight agar tidak salah visual
+                    lastMove = null;
                     updateGameUI();
                 }
             } else {
-                // Mode lokal: batalkan 1 langkah saja
                 if (game.history().length >= 1) {
                     game.undo();
                     lastMove = null;
@@ -894,7 +877,6 @@
             }
         });
 
-        // Fitur Menyerah (Resign)
         document.getElementById('btn-resign').addEventListener('click', () => {
             if (game.game_over()) return;
             stopTimer();
@@ -905,14 +887,12 @@
             showGameOverModal(`${winner} Menang!`, `Pemain ${loser} menyerah secara sukarela.`);
         });
 
-        // Fitur Tawarkan Remis (Draw Offer)
         document.getElementById('btn-offer-draw').addEventListener('click', () => {
             if (game.game_over()) return;
             
             if (gameMode === 'vs_computer') {
-                // Logika AI sederhana untuk penolakan/penerimaan remis: AI menerima jika posisi seimbang
                 const score = evaluateBoard(game.board());
-                if (Math.abs(score) < 150) { // Jika evaluasi sangat seimbang
+                if (Math.abs(score) < 150) { 
                     stopTimer();
                     playAudio('gameover');
                     showGameOverModal("Permainan Remis", "Komputer menerima tawaran remis karena posisi papan sangat seimbang.");
@@ -929,7 +909,6 @@
             }
         });
 
-        // Memulai Game Secara Otomatis Saat Browser Pertama Kali Membuka Website
         window.onload = () => {
             initNewGame();
         };
