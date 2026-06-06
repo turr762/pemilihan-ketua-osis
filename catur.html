@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Situs Catur Profesional - Grandmaster Arena</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+       .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(0, 1fr));
+            grid-template-rows: repeat(8, minmax(0, 1fr));
+            aspect-ratio: 1 / 1;
+        }
+       .square {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            cursor: pointer;
+        }
+       .square-light {
+            background-color: #f0d9b5;
+            color: #b58863;
+        }
+       .square-dark {
+            background-color: #b58863;
+            color: #f0d9b5;
+        }
+        /* Highlight ala Chess.com */
+       .square-selected {
+            background-color: rgba(247, 247, 105, 0.6)!important;
+        }
+       .square-last-move {
+            background-color: rgba(186, 202, 43, 0.5)!important;
+        }
+       .square-check {
+            background-color: rgba(239, 68, 68, 0.6)!important;
+        }
+        /* Petunjuk langkah legal */
+       .legal-dot {
+            width: 24%;
+            height: 24%;
+            background-color: rgba(0, 0, 0, 0.15);
+            border-radius: 9999px;
+            pointer-events: none;
+        }
+       .legal-capture {
+            width: 80%;
+            height: 80%;
+            border: 5px solid rgba(0, 0, 0, 0.15);
+            border-radius: 9999px;
+            pointer-events: none;
+            position: absolute;
+        }
+       .square-light.legal-dot { background-color: rgba(181, 136, 99, 0.4); }
+       .square-dark.legal-dot { background-color: rgba(240, 217, 181, 0.4); }
+        
+       .piece-img {
+            width: 90%;
+            height: 90%;
+            transition: transform 0.1s ease;
+            z-index: 10;
+        }
+       .piece-img:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-neutral-950 text-neutral-100 min-h-screen flex flex-col font-sans">
+
+    <header class="bg-neutral-900 border-b border-neutral-800 px-6 py-4 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-chess-knight text-emerald-500 text-3xl"></i>
+            <span class="text-xl font-bold tracking-wider text-emerald-400">CHESS.INDONESIA</span>
+        </div>
+        <div class="text-sm text-neutral-400 flex items-center gap-2">
+            <span class="inline-block w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
+            Server Utama Online
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <div class="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
+            
+            <div id="player-top-card" class="bg-neutral-900 p-3 rounded-lg flex items-center justify-between border border-neutral-800 transition-colors">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded bg-neutral-800 flex items-center justify-center text-xl" id="opponent-avatar">
+                        <i class="fa-solid fa-robot text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm lg:text-base" id="opponent-name">Mesin AI (Level 2)</h3>
+                        <p class="text-xs text-neutral-400" id="opponent-sub">Rating: ~1400 ELO</p>
+                    </div>
+                </div>
+                <div id="clock-top" class="bg-neutral-800 px-4 py-1.5 rounded font-mono text-xl lg:text-2xl font-bold text-neutral-300 border border-neutral-700">
+                    10:00
+                </div>
+            </div>
+
+            <div class="bg-neutral-900 p-2 rounded-xl border border-neutral-800 shadow-2xl relative">
+                <div id="board" class="chess-board rounded-lg overflow-hidden">
+                    </div>
+            </div>
+
+            <div id="player-bottom-card" class="bg-neutral-900 p-3 rounded-lg flex items-center justify-between border border-neutral-800 transition-colors">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded bg-emerald-800 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-user text-emerald-200"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm lg:text-base">Tamu (Anda)</h3>
+                        <p class="text-xs text-neutral-400">Rating Sementara: 1200 ELO</p>
+                    </div>
+                </div>
+                <div id="clock-bottom" class="bg-neutral-800 px-4 py-1.5 rounded font-mono text-xl lg:text-2xl font-bold text-neutral-300 border border-neutral-700">
+                    10:00
+                </div>
+            </div>
+
+        </div>
+
+        <div class="lg:col-span-5 xl:col-span-4 bg-neutral-900 rounded-xl border border-neutral-800 p-5 flex flex-col gap-5 shadow-xl self-stretch h-full min-h-[600px]">
+            
+            <div>
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">Pengaturan Pertandingan</h2>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs text-neutral-400 mb-1">Mode Game</label>
+                        <select id="select-game-mode" class="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                            <option value="vs_computer">Lawan Komputer</option>
+                            <option value="pass_and_play">Lokal (2 Pemain)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-neutral-400 mb-1">Kesulitan AI</label>
+                        <select id="select-ai-diff" class="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                            <option value="easy">Mudah (Level 1)</option>
+                            <option value="medium" selected>Sedang (Level 2)</option>
+                            <option value="hard">Sulit (Level 3)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-neutral-400 mb-1">Waktu Utama</label>
+                        <select id="select-timer" class="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
+                            <option value="1">1 Menit (Bullet)</option>
+                            <option value="3">3 Menit (Blitz)</option>
+                            <option value="5">5 Menit (Blitz)</option>
+                            <option value="10" selected>10 Menit (Rapid)</option>
+                            <option value="30">30 Menit (Klasik)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="btn-new-game" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 px-4 rounded text-sm font-semibold transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-rotate"></i> Reset Game
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-neutral-800">
+
+            <div id="status-panel" class="bg-neutral-950 p-4 rounded-lg border border-neutral-800 text-center">
+                <p id="game-status-text" class="text-sm font-semibold text-emerald-400">Putih melangkah...</p>
+            </div>
+
+            <div class="flex-1 flex flex-col min-h-[180px]">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">Riwayat Langkah</h2>
+                <div class="flex-1 bg-neutral-950 rounded-lg p-3 border border-neutral-800 overflow-y-auto text-sm font-mono max-h-[220px]" id="move-history">
+                    <div class="grid grid-cols-12 gap-1 text-neutral-500 border-b border-neutral-900 pb-1 mb-1">
+                        <div class="col-span-2">No</div>
+                        <div class="col-span-5">Putih</div>
+                        <div class="col-span-5">Hitam</div>
+                    </div>
+                    <div id="moves-container" class="space-y-1">
+                        </div>
+                </div>
+            </div>
+
+            <hr class="border-neutral-800">
+
+            <div class="grid grid-cols-4 gap-2">
+                <button id="btn-undo" class="bg-neutral-800 hover:bg-neutral-700 py-2.5 rounded text-sm flex flex-col items-center justify-center gap-1 transition-all" title="Undo Langkah">
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                    <span class="text-[10px] text-neutral-400">Undo</span>
+                </button>
+                <button id="btn-flip" class="bg-neutral-800 hover:bg-neutral-700 py-2.5 rounded text-sm flex flex-col items-center justify-center gap-1 transition-all" title="Balik Papan">
+                    <i class="fa-solid fa-arrows-up-down"></i>
+                    <span class="text-[10px] text-neutral-400">Balik</span>
+                </button>
+                <button id="btn-resign" class="bg-neutral-800 hover:bg-neutral-700 py-2.5 rounded text-sm flex flex-col items-center justify-center gap-1 transition-all text-red-400 hover:text-red-300" title="Menyerah">
+                    <i class="fa-solid fa-flag"></i>
+                    <span class="text-[10px] text-neutral-400">Menyerah</span>
+                </button>
+                <button id="btn-offer-draw" class="bg-neutral-800 hover:bg-neutral-700 py-2.5 rounded text-sm flex flex-col items-center justify-center gap-1 transition-all text-yellow-400 hover:text-yellow-300" title="Tawarkan Remis">
+                    <i class="fa-solid fa-handshake"></i>
+                    <span class="text-[10px] text-neutral-400">Remis</span>
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="modal-promotion" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-neutral-900 p-6 rounded-xl border border-neutral-700 max-w-sm w-full text-center shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-emerald-400">Promosi Pion Anda</h3>
+            <p class="text-xs text-neutral-400 mb-4">Pilih bidak untuk promosi langkah pion Anda:</p>
+            <div class="grid grid-cols-4 gap-3">
+                <button onclick="selectPromotion('q')" class="bg-neutral-800 hover:bg-neutral-700 p-3 rounded-lg border border-neutral-700 transition-all flex flex-col items-center gap-2">
+                    <img id="promo-q-img" src="" class="w-12 h-12">
+                    <span class="text-xs font-semibold">Ratu</span>
+                </button>
+                <button onclick="selectPromotion('r')" class="bg-neutral-800 hover:bg-neutral-700 p-3 rounded-lg border border-neutral-700 transition-all flex flex-col items-center gap-2">
+                    <img id="promo-r-img" src="" class="w-12 h-12">
+                    <span class="text-xs font-semibold">Benteng</span>
+                </button>
+                <button onclick="selectPromotion('b')" class="bg-neutral-800 hover:bg-neutral-700 p-3 rounded-lg border border-neutral-700 transition-all flex flex-col items-center gap-2">
+                    <img id="promo-b-img" src="" class="w-12 h-12">
+                    <span class="text-xs font-semibold">Gajah</span>
+                </button>
+                <button onclick="selectPromotion('n')" class="bg-neutral-800 hover:bg-neutral-700 p-3 rounded-lg border border-neutral-700 transition-all flex flex-col items-center gap-2">
+                    <img id="promo-n-img" src="" class="w-12 h-12">
+                    <span class="text-xs font-semibold">Kuda</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-gameover" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+        <div class="bg-neutral-900 p-8 rounded-xl border border-neutral-700 max-w-sm w-full text-center shadow-2xl">
+            <div class="w-16 h-16 bg-emerald-900/50 text-emerald-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 border border-emerald-500/30">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-2 text-white" id="gameover-title">Game Berakhir</h3>
+            <p class="text-sm text-neutral-400 mb-6" id="gameover-desc">Sebab Penghentian Pertandingan</p>
+            <button id="btn-close-gameover" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-lg transition-all">
+                Mulai Game Baru
+            </button>
+        </div>
+    </div>
+
+    <footer class="bg-neutral-950 border-t border-neutral-900 py-4 text-center text-xs text-neutral-500">
+        &copy; 2026 Chess Indonesia. Divalidasi sepenuhnya sesuai regulasi Federasi Catur Internasional (FIDE).
+    </footer>
+
+    <script>
+        // Inisialisasi engine logika utama
+        let game = new Chess();
+
+        // Parameter Pengaturan Status Game
+        let gameMode = 'vs_computer'; // vs_computer | pass_and_play
+        let aiDifficulty = 'medium'; // easy | medium | hard
+        let whiteTime = 600; // default 10m dalam hitungan detik
+        let blackTime = 600;
+        let selectedSquare = null;
+        let boardFlipped = false;
+        let legalMovesForSelected =;
+        let timerInterval = null;
+        let activeTimerColor = null; // 'w' | 'b'
+        let lastMove = null;
+        let pendingPromotionMove = null; // Menyimpan data langkah saat menunggu promosi
+
+        // Peta Lokasi SVG Wikimedia untuk Bidak Berkualitas Tinggi
+        const PIECE_IMAGES = {
+            'wP': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
+            'wR': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+            'wN': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+            'wB': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+            'wQ': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+            'wK': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+            'bP': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+            'bR': 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+            'bN': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+            'bB': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+            'bQ': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+            'bK': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
+        };
+
+        // Algoritma Sintesis Efek Suara HTML5 (Bebas Ketergantungan Aset Luar)
+        function playAudio(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'move') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(280, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.1);
+                } else if (type === 'capture') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.15);
+                } else if (type === 'gameover') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime); // Chord C5
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                }
+            } catch (e) {
+                console.warn("AudioContext dinonaktifkan oleh kebijakan keamanan browser.", e);
+            }
+        }
+
+        // Menerjemahkan Indeks Baris/Kolom Ke Kode Petak Standar FIDE
+        function getSquareName(row, col) {
+            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+            const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];
+            return files[col] + ranks[row];
+        }
+
+        // Render Papan Catur dan Mengunci Elemen Berdasarkan Aturan
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            const boardState = game.board();
+
+            // Memeriksa Apakah Ada Raja Yang Sedang Terancam Skak (Check)
+            const inCheck = game.in_check();
+            const turn = game.turn();
+
+            // Mendapatkan Lokasi Raja yang Sedang Kena Skak
+            let checkSquare = null;
+            if (inCheck) {
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const piece = boardState[r][c];
+                        if (piece && piece.type === 'k' && piece.color === turn) {
+                            checkSquare = getSquareName(r, c);
+                            break;
+                        }
+                    }
+                    if (checkSquare) break;
+                }
+            }
+
+            for (let r = 0; r < 8; r++) {
+                const rowIdx = boardFlipped? 7 - r : r;
+                for (let c = 0; c < 8; c++) {
+                    const colIdx = boardFlipped? 7 - c : c;
+                    const squareName = getSquareName(rowIdx, colIdx);
+                    const piece = boardState[rowIdx][colIdx];
+
+                    const squareEl = document.createElement('div');
+                    squareEl.className = `square ${((rowIdx + colIdx) % 2 === 0)? 'square-light' : 'square-dark'}`;
+                    squareEl.dataset.square = squareName;
+
+                    // Mengaplikasikan Highlight Visual
+                    if (selectedSquare === squareName) {
+                        squareEl.classList.add('square-selected');
+                    }
+                    if (lastMove && (lastMove.from === squareName || lastMove.to === squareName)) {
+                        squareEl.classList.add('square-last-move');
+                    }
+                    if (checkSquare === squareName) {
+                        squareEl.classList.add('square-check');
+                    }
+
+                    // Render Bidak Gambar
+                    if (piece) {
+                        const pieceCode = piece.color + piece.type.toUpperCase();
+                        const img = document.createElement('img');
+                        img.src = PIECE_IMAGES[pieceCode];
+                        img.className = 'piece-img';
+                        squareEl.appendChild(img);
+                    }
+
+                    // Render Hint (Titik Panduan Langkah Legal)
+                    const isLegalTarget = legalMovesForSelected.some(m => m.to === squareName);
+                    if (isLegalTarget) {
+                        const hint = document.createElement('div');
+                        if (piece) {
+                            hint.className = 'legal-capture'; // Lingkaran bidik untuk dimakan
+                        } else {
+                            hint.className = 'legal-dot'; // Titik kosong
+                        }
+                        squareEl.appendChild(hint);
+                    }
+
+                    // Deteksi Sesi Klik
+                    squareEl.addEventListener('click', () => handleSquareClick(squareName));
+                    boardEl.appendChild(squareEl);
+                }
+            }
+        }
+
+        // Pengendali Klik Petak Papan Catur
+        function handleSquareClick(squareName) {
+            if (game.game_over() || (gameMode === 'vs_computer' && game.turn() === 'b')) return;
+
+            const piece = game.get(squareName);
+
+            // Kondisi 1: Memilih Bidak yang Ingin Digerakkan
+            if (piece && piece.color === game.turn()) {
+                selectedSquare = squareName;
+                legalMovesForSelected = game.moves({ square: squareName, verbose: true });
+                renderBoard();
+                return;
+            }
+
+            // Kondisi 2: Mencoba Memindahkan ke Petak Target
+            const destinationMove = legalMovesForSelected.find(m => m.to === squareName);
+            if (destinationMove) {
+                // Periksa Apakah Ada Skenario Promosi Pion
+                if (destinationMove.flags.includes('p')) {
+                    pendingPromotionMove = { from: selectedSquare, to: squareName };
+                    showPromotionModal(game.turn());
+                    return;
+                }
+
+                executeMove(selectedSquare, squareName);
+            } else {
+                // Klik di Area Kosong: Batalkan Pilihan
+                selectedSquare = null;
+                legalMovesForSelected =;
+                renderBoard();
+            }
+        }
+
+        // Eksekusi Langkah dan Sinkronisasi State Game
+        function executeMove(from, to, promotion = null) {
+            const isCapture = game.get(to)!== null;
+            const moveObj = { from, to };
+            if (promotion) moveObj.promotion = promotion;
+
+            const move = game.move(moveObj);
+            if (move) {
+                lastMove = { from, to };
+                selectedSquare = null;
+                legalMovesForSelected =;
+                
+                // Bunyi Efek Suara
+                if (isCapture || move.flags.includes('e')) {
+                    playAudio('capture');
+                } else {
+                    playAudio('move');
+                }
+
+                // Jalankan Jam Catur jika Belum Dimulai
+                if (activeTimerColor === null) {
+                    activeTimerColor = 'w';
+                    startTimer();
+                } else {
+                    activeTimerColor = game.turn();
+                }
+
+                updateGameUI();
+
+                // Pemicu Giliran Bot AI
+                if (!game.game_over() && gameMode === 'vs_computer' && game.turn() === 'b') {
+                    document.getElementById('game-status-text').innerText = "Komputer sedang berpikir...";
+                    setTimeout(executeAIMove, 400); // Penundaan taktis demi kenyamanan visual pemain
+                }
+            }
+        }
+
+        // Tampilkan Modal Promosi Pion
+        function showPromotionModal(color) {
+            document.getElementById('promo-q-img').src = PIECE_IMAGES[color + 'Q'];
+            document.getElementById('promo-r-img').src = PIECE_IMAGES;
+            document.getElementById('promo-b-img').src = PIECE_IMAGES;
+            document.getElementById('promo-n-img').src = PIECE_IMAGES[color + 'N'];
+            document.getElementById('modal-promotion').classList.remove('hidden');
+        }
+
+        // Callback Pemilihan Tombol Bidak Promosi
+        function selectPromotion(choice) {
+            document.getElementById('modal-promotion').classList.add('hidden');
+            if (pendingPromotionMove) {
+                executeMove(pendingPromotionMove.from, pendingPromotionMove.to, choice);
+                pendingPromotionMove = null;
+            }
+        }
+
+        // Update Seluruh Elemen Antarmuka Pengguna
+        function updateGameUI() {
+            renderBoard();
+            updateHistoryPanel();
+            updateStatusAndCards();
+            checkGameOver();
+        }
+
+        // Update Sisi Riwayat Notasi Langkah Aljabar (PGN)
+        function updateHistoryPanel() {
+            const container = document.getElementById('moves-container');
+            container.innerHTML = '';
+            const history = game.history();
+            
+            let rowHTML = '';
+            for (let i = 0; i < history.length; i += 2) {
+                const moveNum = Math.floor(i / 2) + 1;
+                const whiteMove = history[i];
+                const blackMove = history[i+1] || '';
+
+                const row = document.createElement('div');
+                row.className = "grid grid-cols-12 gap-1 py-1 border-b border-neutral-900/40 hover:bg-neutral-800/20";
+                row.innerHTML = `
+                    <div class="col-span-2 text-neutral-500">${moveNum}.</div>
+                    <div class="col-span-5 text-neutral-200 font-semibold cursor-pointer hover:text-emerald-400">${whiteMove}</div>
+                    <div class="col-span-5 text-neutral-200 font-semibold cursor-pointer hover:text-emerald-400">${blackMove}</div>
+                `;
+                container.appendChild(row);
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Update Kartu Pemain yang Memiliki Giliran Aktif
+        function updateStatusAndCards() {
+            const turn = game.turn();
+            const statusTextEl = document.getElementById('game-status-text');
+            const topCard = document.getElementById('player-top-card');
+            const bottomCard = document.getElementById('player-bottom-card');
+
+            // Set Warna Status
+            if (turn === 'w') {
+                statusTextEl.innerText = "Giliran Putih Melangkah...";
+                statusTextEl.className = "text-sm font-semibold text-emerald-400";
+                
+                // Sorot Kartu Pemain Bawah
+                bottomCard.classList.add('border-emerald-500', 'bg-neutral-900/80');
+                topCard.classList.remove('border-emerald-500', 'bg-neutral-900/80');
+            } else {
+                statusTextEl.innerText = gameMode === 'vs_computer'? "Komputer Sedang Berpikir..." : "Giliran Hitam Melangkah...";
+                statusTextEl.className = "text-sm font-semibold text-emerald-400";
+                
+                // Sorot Kartu Pemain Atas
+                topCard.classList.add('border-emerald-500', 'bg-neutral-900/80');
+                bottomCard.classList.remove('border-emerald-500', 'bg-neutral-900/80');
+            }
+        }
+
+        // Deteksi Kondisi Penghentian Sesuai Hukum FIDE
+        function checkGameOver() {
+            if (game.game_over()) {
+                stopTimer();
+                playAudio('gameover');
+                
+                let title = "Permainan Berakhir";
+                let desc = "";
+
+                if (game.in_checkmate()) {
+                    const winner = game.turn() === 'w'? "Hitam" : "Putih";
+                    title = `${winner} Menang!`;
+                    desc = "Kemenangan mutlak dengan Skakmat (Checkmate).";
+                } else if (game.in_stalemate()) {
+                    title = "Remis (Stalemate)";
+                    desc = "Pemain tidak memiliki langkah sah saat tidak dalam keadaan skak.";
+                } else if (game.in_threefold_repetition()) {
+                    title = "Remis (Threefold Repetition)";
+                    desc = "Klaim seri karena posisi papan yang sama telah terjadi sebanyak 3 kali.";
+                } else if (game.insufficient_material && game.insufficient_material()) {
+                    title = "Remis (Insufficient Material)";
+                    desc = "Komposisi sisa bidak tidak cukup untuk menghasilkan posisi skakmat.";
+                } else if (game.in_draw()) {
+                    title = "Remis (50-Move Rule / Aturan Draw)";
+                    desc = "Pertandingan dihentikan seimbang sesuai aturan batas 50 langkah FIDE.";
+                }
+
+                showGameOverModal(title, desc);
+            }
+        }
+
+        function showGameOverModal(title, desc) {
+            document.getElementById('gameover-title').innerText = title;
+            document.getElementById('gameover-desc').innerText = desc;
+            document.getElementById('modal-gameover').classList.remove('hidden');
+        }
+
+        // ==========================================
+        // SISTEM JAM CATUR SINKRON (REAL-TIME CLOCK)
+        // ==========================================
+        function formatClockTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateClockDisplays() {
+            document.getElementById('clock-bottom').innerText = formatClockTime(whiteTime);
+            document.getElementById('clock-top').innerText = formatClockTime(blackTime);
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (activeTimerColor === 'w') {
+                    if (whiteTime > 0) {
+                        whiteTime--;
+                    } else {
+                        // Putih Kalah Waktu
+                        handleTimeout('w');
+                    }
+                } else if (activeTimerColor === 'b') {
+                    if (blackTime > 0) {
+                        blackTime--;
+                    } else {
+                        // Hitam Kalah Waktu
+                        handleTimeout('b');
+                    }
+                }
+                updateClockDisplays();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            activeTimerColor = null;
+        }
+
+        function handleTimeout(loserColor) {
+            stopTimer();
+            playAudio('gameover');
+            const winner = loserColor === 'w'? "Hitam" : "Putih";
+            showGameOverModal(`${winner} Menang!`, `Pihak ${loserColor === 'w'? 'Putih' : 'Hitam'} kalah karena kehabisan sisa batas waktu.`);
+        }
+
+        // ==========================================
+        // ENTI BOT KOMPUTER AI (MINIMAX ALGORITMA)
+        // ==========================================
+        
+        // Bobot Evaluasi Nilai Dasar Bidak Catur
+        const PIECE_VALUES = {
+            'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000
+        };
+
+        // Positional Table (PST) untuk Mengoptimalkan Pola Strategi Bidang AI
+        const PAWN_PST = ,
+            ,
+            [10, 10, 20, 30, 30, 20, 10, 10],
+            [5,  5, 10, 25, 25, 10,  5,  5],
+            ,
+            [5, -5,-10,  0,  0,-10, -5,  5],
+            [5, 10, 10,-20,-20, 10, 10,  5],
+            ;
+
+        const KNIGHT_PST = [-50,-40,-30,-30,-30,-30,-40,-50],
+            [-40,-20,  0,  0,  0,  0,-20,-40],
+            [-30,  0, 10, 15, 15, 10,  0,-30],
+            [-30,  5, 15, 20, 20, 15,  5,-30],
+            [-30,  0, 15, 20, 20, 15,  0,-30],
+            [-30,  5, 10, 15, 15, 10,  5,-30],
+            [-40,-20,  0,  5,  5,  0,-20,-40],
+            [-50,-40,-30,-30,-30,-30,-40,-50];
+
+        const BISHOP_PST = [-20,-10,-10,-10,-10,-10,-10,-20],
+            [-10,  0,  0,  0,  0,  0,  0,-10],
+            [-10,  0,  5, 10, 10,  5,  0,-10],
+            [-10,  5,  5, 10, 10,  5,  5,-10],
+            [-10,  0, 10, 10, 10, 10,  0,-10],
+            [-10, 10, 10, 10, 10, 10, 10,-10],
+            [-10,  5,  0,  0,  0,  0,  5,-10],
+            [-20,-10,-10,-10,-10,-10,-10,-20];
+
+        const ROOK_PST = ,
+            [5, 10, 10, 10, 10, 10, 10,  5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            ;
+
+        const QUEEN_PST = [-20,-10,-10, -5, -5,-10,-10,-20],
+            [-10,  0,  0,  0,  0,  0,  0,-10],
+            [-10,  0,  5,  5,  5,  5,  0,-10],
+            [-5,  0,  5,  5,  5,  5,  0, -5],
+            [0,  0,  5,  5,  5,  5,  0, -5],
+            [-10,  5,  5,  5,  5,  5,  0,-10],
+            [-10,  0,  5,  0,  0,  5,  0,-10],
+            [-20,-10,-10, -5, -5,-10,-10,-20];
+
+        const KING_MIDDLE_PST = [-30,-40,-40,-50,-50,-40,-40,-30],
+            [-30,-40,-40,-50,-50,-40,-40,-30],
+            [-30,-40,-40,-50,-50,-40,-40,-30],
+            [-30,-40,-40,-50,-50,-40,-40,-30],
+            [-20,-30,-30,-40,-40,-30,-30,-20],
+            [-10,-20,-20,-20,-20,-20,-20,-10],
+            ,
+            ;
+
+        // Fungsi Evaluasi Statis Posisi Papan Catur dari Sudut Pandang Putih
+        function evaluateBoard(board) {
+            let totalEvaluation = 0;
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const piece = board[r][c];
+                    if (piece) {
+                        const value = PIECE_VALUES[piece.type];
+                        
+                        // Menghitung Sisi Matriks Posisi Mengikuti Kriteria Koordinat Balikan (Flipped)
+                        let pstValue = 0;
+                        const rIndex = piece.color === 'b'? r : 7 - r;
+                        const cIndex = piece.color === 'b'? c : 7 - c;
+
+                        if (piece.type === 'p') pstValue = PAWN_PST[rIndex][cIndex];
+                        else if (piece.type === 'n') pstValue = KNIGHT_PST[rIndex][cIndex];
+                        else if (piece.type === 'b') pstValue = BISHOP_PST[rIndex][cIndex];
+                        else if (piece.type === 'r') pstValue = ROOK_PST[rIndex][cIndex];
+                        else if (piece.type === 'q') pstValue = QUEEN_PST[rIndex][cIndex];
+                        else if (piece.type === 'k') pstValue = KING_MIDDLE_PST[rIndex][cIndex];
+
+                        if (piece.color === 'w') {
+                            totalEvaluation += value + pstValue;
+                        } else {
+                            totalEvaluation -= (value + pstValue);
+                        }
+                    }
+                }
+            }
+            return totalEvaluation;
+        }
+
+        // Algoritma Minimax Utama dengan Pemotongan Alpha-Beta (Alpha-Beta Pruning)
+        function minimax(depth, alpha, beta, isMaximizingPlayer) {
+            if (depth === 0 || game.game_over()) {
+                return { score: evaluateBoard(game.board()) };
+            }
+
+            const moves = game.moves({ verbose: true });
+            
+            // Pengurutan Gerakan Taktis (Langkah Makan Terlebih Dahulu) untuk Optimasi Pangkas
+            moves.sort((a, b) => {
+                const valA = a.captured? PIECE_VALUES[a.captured] : 0;
+                const valB = b.captured? PIECE_VALUES[b.captured] : 0;
+                return valB - valA;
+            });
+
+            let bestMove = null;
+
+            if (isMaximizingPlayer) {
+                let maxScore = -Infinity;
+                for (let i = 0; i < moves.length; i++) {
+                    game.move(moves[i]);
+                    const evaluation = minimax(depth - 1, alpha, beta, false).score;
+                    game.undo();
+                    if (evaluation > maxScore) {
+                        maxScore = evaluation;
+                        bestMove = moves[i];
+                    }
+                    alpha = Math.max(alpha, evaluation);
+                    if (beta <= alpha) break; // Pruning
+                }
+                return { score: maxScore, move: bestMove };
+            } else {
+                let minScore = Infinity;
+                for (let i = 0; i < moves.length; i++) {
+                    game.move(moves[i]);
+                    const evaluation = minimax(depth - 1, alpha, beta, true).score;
+                    game.undo();
+                    if (evaluation < minScore) {
+                        minScore = evaluation;
+                        bestMove = moves[i];
+                    }
+                    beta = Math.min(beta, evaluation);
+                    if (beta <= alpha) break; // Pruning
+                }
+                return { score: minScore, move: bestMove };
+            }
+        }
+
+        // Penentu Langkah Terbaik oleh Bot Kecerdasan Buatan (AI)
+        function executeAIMove() {
+            if (game.game_over()) return;
+
+            const moves = game.moves({ verbose: true });
+            let selectedMove = null;
+
+            if (aiDifficulty === 'easy') {
+                // Skenario 1: Level Mudah (Memilih Langkah Acak Secara Bebas)
+                const randomIdx = Math.floor(Math.random() * moves.length);
+                selectedMove = moves[randomIdx];
+            } else if (aiDifficulty === 'medium') {
+                // Skenario 2: Level Sedang (Pencarian Minimax Kedalaman 2 Langkah)
+                const result = minimax(2, -Infinity, Infinity, false);
+                selectedMove = result.move || moves;
+            } else if (aiDifficulty === 'hard') {
+                // Skenario 3: Level Sulit (Pencarian Mendalam 3 Langkah)
+                const result = minimax(3, -Infinity, Infinity, false);
+                selectedMove = result.move || moves;
+            }
+
+            if (selectedMove) {
+                const isCapture = game.get(selectedMove.to)!== null;
+                const executed = game.move({
+                    from: selectedMove.from,
+                    to: selectedMove.to,
+                    promotion: 'q' // AI selalu memprioritaskan Ratu pada promosi
+                });
+
+                if (executed) {
+                    lastMove = { from: selectedMove.from, to: selectedMove.to };
+                    
+                    // Efek Suara Langkah AI
+                    if (isCapture || executed.flags.includes('e')) {
+                        playAudio('capture');
+                    } else {
+                        playAudio('move');
+                    }
+
+                    activeTimerColor = 'w';
+                    updateGameUI();
+                }
+            }
+        }
+
+        // ==========================================
+        // OPERASIONAL PENGENDALI KENDALI GAME (UI)
+        // ==========================================
+        
+        function initNewGame() {
+            stopTimer();
+            game = new Chess();
+            
+            // Mengambil Konfigurasi Input dari Menu UI
+            gameMode = document.getElementById('select-game-mode').value;
+            aiDifficulty = document.getElementById('select-ai-diff').value;
+            const chosenMins = parseInt(document.getElementById('select-timer').value);
+            
+            whiteTime = chosenMins * 60;
+            blackTime = chosenMins * 60;
+            selectedSquare = null;
+            legalMovesForSelected =;
+            lastMove = null;
+            pendingPromotionMove = null;
+
+            // Inisialisasi Nama UI Sesuai Mode Game
+            if (gameMode === 'vs_computer') {
+                document.getElementById('opponent-name').innerText = `AI Komputer (${aiDifficulty === 'easy'? 'Mudah' : aiDifficulty === 'medium'? 'Sedang' : 'Sulit'})`;
+                document.getElementById('opponent-sub').innerText = `Rating: ~${aiDifficulty === 'easy'? '800' : aiDifficulty === 'medium'? '1400' : '2000'} ELO`;
+                document.getElementById('opponent-avatar').innerHTML = '<i class="fa-solid fa-robot text-emerald-400"></i>';
+            } else {
+                document.getElementById('opponent-name').innerText = "Pemain 2 (Hitam)";
+                document.getElementById('opponent-sub').innerText = "Tamu Lokal";
+                document.getElementById('opponent-avatar').innerHTML = '<i class="fa-solid fa-user-plus text-neutral-400"></i>';
+            }
+
+            // Sinkronisasi Sisi Antarmuka
+            updateClockDisplays();
+            updateGameUI();
+            
+            // Hilangkan Segala Bentuk Layar Modal Hasil Akhir yang Masih Muncul
+            document.getElementById('modal-gameover').classList.add('hidden');
+        }
+
+        // Event Listener Kendali Aksi
+        document.getElementById('btn-new-game').addEventListener('click', initNewGame);
+        
+        document.getElementById('btn-close-gameover').addEventListener('click', () => {
+            document.getElementById('modal-gameover').classList.add('hidden');
+            initNewGame();
+        });
+
+        // Balik Orientasi Piringan Papan Catur
+        document.getElementById('btn-flip').addEventListener('click', () => {
+            boardFlipped =!boardFlipped;
+            renderBoard();
+        });
+
+        // Fitur Batalkan Langkah (Undo)
+        document.getElementById('btn-undo').addEventListener('click', () => {
+            // Jika melawan komputer, lakukan undo 2 langkah (langkah AI dan langkah Anda)
+            if (gameMode === 'vs_computer') {
+                if (game.history().length >= 2) {
+                    game.undo();
+                    game.undo();
+                    lastMove = null; // Reset highlight agar tidak salah visual
+                    updateGameUI();
+                }
+            } else {
+                // Mode lokal: batalkan 1 langkah saja
+                if (game.history().length >= 1) {
+                    game.undo();
+                    lastMove = null;
+                    updateGameUI();
+                }
+            }
+        });
+
+        // Fitur Menyerah (Resign)
+        document.getElementById('btn-resign').addEventListener('click', () => {
+            if (game.game_over()) return;
+            stopTimer();
+            playAudio('gameover');
+            
+            const loser = game.turn() === 'w'? "Putih" : "Hitam";
+            const winner = game.turn() === 'w'? "Hitam" : "Putih";
+            showGameOverModal(`${winner} Menang!`, `Pemain ${loser} menyerah secara sukarela.`);
+        });
+
+        // Fitur Tawarkan Remis (Draw Offer)
+        document.getElementById('btn-offer-draw').addEventListener('click', () => {
+            if (game.game_over()) return;
+            
+            if (gameMode === 'vs_computer') {
+                // Logika AI sederhana untuk penolakan/penerimaan remis: AI menerima jika posisi seimbang
+                const score = evaluateBoard(game.board());
+                if (Math.abs(score) < 150) { // Jika evaluasi sangat seimbang
+                    stopTimer();
+                    playAudio('gameover');
+                    showGameOverModal("Permainan Remis", "Komputer menerima tawaran remis karena posisi papan sangat seimbang.");
+                } else {
+                    alert("Komputer menolak tawaran remis Anda! Pertandingan berlanjut.");
+                }
+            } else {
+                const accept = confirm("Pihak lawan menawarkan hasil remis (seri). Apakah Anda menerima?");
+                if (accept) {
+                    stopTimer();
+                    playAudio('gameover');
+                    showGameOverModal("Permainan Remis", "Hasil seri disepakati bersama oleh kedua belah pihak.");
+                }
+            }
+        });
+
+        // Memulai Game Secara Otomatis Saat Browser Pertama Kali Membuka Website
+        window.onload = () => {
+            initNewGame();
+        };
+    </script>
+</body>
+</html>
